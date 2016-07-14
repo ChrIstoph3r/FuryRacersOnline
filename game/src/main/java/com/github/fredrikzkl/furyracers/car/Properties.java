@@ -4,7 +4,7 @@ import org.newdawn.slick.Image;
 
 import com.github.fredrikzkl.furyracers.assets.Sprites;
 
-public enum CarProperties {
+public enum Properties {
 	
 	mustangR("mustang", "medium", Sprites.mustangR,0.4f, 300,480,100, 105, 75,110,1), // 0
 	mustangB("mustang", "medium", Sprites.mustangB,0.4f, 300,480,100, 105, 75,110,1), // 1
@@ -19,13 +19,15 @@ public enum CarProperties {
 	VRaptorR("velociRapor", "large", Sprites.vRaptorR,0.65f, 350,480,70, 100, 80,110,1), //8
 	VRaptorB("velociRapor", "large", Sprites.vRaptorB,0.65f, 350,480,70, 100, 80,110,1), //9
 	VRaptorG("velociRapor", "large", Sprites.vRaptorG,0.65f, 350,480,70, 100, 80,110,1), //10
-	VRaptorY("velociRapor", "large", Sprites.vRaptorY,0.65f, 350,480,70, 100, 80,110,1); //11
+	VRaptorY("velociRapor", "large", Sprites.vRaptorY,0.65f, 350,480,70, 100, 80,110,1), //11
+	
+	Missile("HeatSeaker", "small", Sprites.missile, 1f, 350, 900, 250, 100, 80, 120, 1); //12
 	
 	public String name;
 	public String type;
-	public Image carImage;
+	public Image image;
 	
-	public float carSize;
+	public float size;
 	public float topSpeed;
 	public float reverseTopSpeed;
 	public float acceleration;
@@ -34,19 +36,19 @@ public enum CarProperties {
 	public float handling;
 	public float weight;
 	
-	CarProperties(String name, String type, Image carImage, float size, float reverseTopSpeed,float topSpeed,
+	Properties(String name, String type, Image image, float size, float reverseTopSpeed,float topSpeed,
 			float acceleration, float reverseAcceleration, float deAcceleration, float handling, float weight){
 		
-		this.name = name;
 		this.type = type;
-		this.carImage = carImage;
-		this.carSize = size;
-		this.topSpeed = topSpeed;
+		this.size = size;
+		this.image = image;
 		this.reverseTopSpeed = reverseTopSpeed;
 		this.reverseAcceleration = reverseAcceleration;
 		this.deAcceleration = deAcceleration;
 		this.acceleration = acceleration;
+		this.topSpeed = topSpeed;
 		this.handling = handling;
 		this.weight = weight;
+		this.name = name;
 	}
 }

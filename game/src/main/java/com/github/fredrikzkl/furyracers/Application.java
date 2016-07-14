@@ -19,7 +19,7 @@ import javax.websocket.EncodeException;
 
 public class Application extends StateBasedGame {
 
-	private final static String version = "0.02" + "a";
+	private final static String version = "0.2" + "a";
 	private final static String gameName = "FuryRacers";
 	private final static int menuID = 0;
 	public static final int FPS = 120;
@@ -31,9 +31,9 @@ public class Application extends StateBasedGame {
 	public static boolean inMenu;
 
 	public static void main(String[] args) {
-			createStates();
-			createGameSession();
-			startGame();
+		createStates();
+		createGameSession();
+		startGame();
 	}
 	
 	public Application(String gameName) {
@@ -56,6 +56,7 @@ public class Application extends StateBasedGame {
 		Sprites.initialize();
 		Sounds.initialize();
 		Fonts.initialize();
+		Animations.initialize();
 		this.enterState(menuID);
 	}
 
@@ -83,7 +84,7 @@ public class Application extends StateBasedGame {
 					new Application(gameName), (int) screenSize.getWidth(),
 					(int) screenSize.getHeight()));
 			app.setDisplayMode((int) screenSize.getWidth(),
-					(int) screenSize.getHeight(), true);
+					(int) screenSize.getHeight(), false);
 			app.setTargetFrameRate(FPS);
 			app.setAlwaysRender(true);
 			app.start();

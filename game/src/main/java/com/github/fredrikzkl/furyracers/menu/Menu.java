@@ -136,7 +136,7 @@ public class Menu extends BasicGameState {
 	private void drawQRcode(Graphics g){
 
 		float yPosQR = QRmargin;
-		float xPosQR  = screenWidth - Sprites.controllerQR.getWidth()- QRmargin;
+		float xPosQR  = screenWidth - Sprites.controllerQR.getWidth() - QRmargin;
 		
 		g.drawImage(Sprites.controllerQR, xPosQR, yPosQR);
 		
@@ -149,12 +149,10 @@ public class Menu extends BasicGameState {
 		float middleOfQr = (xPosQR + xEndOfQR)/2;
 		float xPosInfoString =  middleOfQr - strLngthInfo/2;
 		
-		
 		Fonts.consoleText.drawString(xPosInfoString, yPosInfoString, "Scan for controller!", Color.red);
 	}
 	
 	private void drawIp(Graphics g) {
-		 
 		
 		String infoStr = "Write " + controllerIP + " in phone browser for controller!";
 		float strLngthIp = Fonts.consoleText.getWidth(infoStr);
@@ -176,7 +174,6 @@ public class Menu extends BasicGameState {
 		float yPosIpString = yPosBox;
 		 
 		Fonts.consoleText.drawString(xPosIpString, yPosIpString, infoStr);
-		
 	}
 	
 	private void drawHeader(){
@@ -245,14 +242,13 @@ public class Menu extends BasicGameState {
 
 	private boolean allPlayersAreReady() {
 
-		if (players.size() > 0) {
-			for (Player player : players)
-				if (!player.isReady())
-					return false;
-		} else {
+		if(players.size() == 0)
 			return false;
-		}
-
+		
+		for (Player player : players)
+			if (!player.isReady())
+				return false;
+		 
 		return true;
 	}
 
@@ -272,9 +268,8 @@ public class Menu extends BasicGameState {
 			secondsToNextGame = (int) (allReadyTimestamp + counter - seconds);
 			countDown = String.valueOf(secondsToNextGame);
 
-			if (secondsToNextGame <= 0) {
+			if (secondsToNextGame <= 0)
 				startGame(container, game);
-			}
 
 		} else {
 			getReadySaid = false;
@@ -386,7 +381,6 @@ public class Menu extends BasicGameState {
 		float posX = (screenWidth/2 - realXvalue/2);
 		float posY = screenHeight - realYvalue - margin;
 		
-		
 		Sprites.nextLevelBorder.draw(posX,posY,scaleValue);
 		
 		course.minimap.draw(posX,posY,realXvalue,realYvalue);
@@ -400,8 +394,6 @@ public class Menu extends BasicGameState {
  		Fonts.consoleText.drawString(posX, posY - cnslTxtHeight, "Next course: ");
 		
 		Fonts.regularText.drawString(mapNameYpos, posY + rglTxtHeight, course.mapName);
-		
-		
 	}
 
 	private void drawMenuInfo(Graphics g) {
@@ -431,7 +423,7 @@ public class Menu extends BasicGameState {
 		
 		float xPos = screenWidth/2 - stringLength/2;
 		
-		if (Math.sin(tick / 60) > 0) {
+		if (Math.sin( tick/60) > 0) {
 			Fonts.regularText.drawString( xPos, screenHeight / 2, blinkingText);
 		}
 	}

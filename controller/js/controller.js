@@ -2,7 +2,6 @@
 
 var game;
 var style;
-var usernameText;
 var carModel;
 var carModelText;
 
@@ -17,6 +16,19 @@ function setCarModel(carModel){
   drawCarModel();
 }
 
+function equipItem(equipItem){
+ 
+  var btnWdth = launchButtonProperties.width;
+  var btnHite = launchButtonProperties.height;
+  var screenWidth = game.width;
+  var screenHeight = game.height;
+  var btnX = screenWidth/2 - btnWdth/2;
+  var btnY = screenHeight/2 - btnHite/2;
+
+  launchButton = game.add.sprite(btnX, btnY, 'launchButton');
+  launchButton.inputEnabled = true;
+}
+
 function drawCarModel(){
 
   carModelText.destroy();
@@ -24,15 +36,6 @@ function drawCarModel(){
   carModelText = game.add.text(game.world.centerX, 0, carModel, style);
 
   carModelText.anchor.set(0, -1);
-}
-
-function drawUsername(){
-
-  usernameText.destroy();
-
-  usernameText = game.add.text(game.world.centerX, 0, getUsername(), style);
-
-  usernameText.anchor.set(0, 0);
 }
 
 (function (Phaser) {
@@ -298,7 +301,7 @@ function drawUsername(){
       game.scale.refresh();
 
       style = { font: ' 20pt Ariel', fill: 'black', align: 'left', wordWrap: true, wordWrapWidth: 450 };
-      usernameText = game.add.text(game.world.width, game.world.height, getUsername(), style);
+     
       carModelText = game.add.text(game.world.centerX, game.world.centerY, carModel, style);
 
       createToolsButton();
@@ -306,9 +309,9 @@ function drawUsername(){
       createArrowKeys();
       createButtonEvents(this);
 
-      setBackgroundColor(offWHITE);
+      equipItem("lame");
 
-      drawUsername();
+      setBackgroundColor(offWHITE);
 
       setFullscreen();
     }

@@ -19,6 +19,6 @@ public class WebsocketClient {
 
     @OnMessage
     public void onMessage(Session session, String message) throws IOException, EncodeException, SlickException {
-        gameSession.onMessage(session, message);
+    	gameSession.onMessage(session, message);
     }
 }

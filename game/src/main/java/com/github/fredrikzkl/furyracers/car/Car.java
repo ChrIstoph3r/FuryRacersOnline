@@ -5,26 +5,31 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import javax.websocket.EncodeException;
+
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
+import org.newdawn.slick.Sound;
+import org.newdawn.slick.geom.Polygon;
 import org.newdawn.slick.geom.Vector2f;
 import org.newdawn.slick.state.StateBasedGame;
 import org.newdawn.slick.GameContainer;
 
+import com.github.fredrikzkl.furyracers.Box;
 import com.github.fredrikzkl.furyracers.assets.Sounds;
 import com.github.fredrikzkl.furyracers.game.GameCore;
 import com.github.fredrikzkl.furyracers.game.Level;
 import com.github.fredrikzkl.furyracers.network.GameSession;
 
-public class Car implements Comparable<Car> {
+public class Car implements Comparable<Car>, Box {
 	
 	private static final int
-	maxLaps = GameCore.maxLaps; 
+	maxLaps = GameCore.maxLaps, fiveSecsInMillis = 5000, twoSecsInMillis = 2000;
 	
 	private int 
 	playerNr, laps, passedChekpoints, 
-	time, originalCarWidth, originalCarLength;
+	time, originalCarWidth, originalCarLength,
+	secsAfctedBySlowDown;
 	
 	private long 
 	startTime, nanoSecondsElapsed, 
@@ -33,10 +38,12 @@ public class Car implements Comparable<Car> {
 	totalTenthsOfSeconds;
 	
 	private boolean 
-	offRoad, finishedRace, startClock, preventMovement;
+	offRoad, isRaceFinished, 
+	startClock, preventMovement,
+	explSlowDown;
 	
 	private float 
-	currentSpeed, radDeg, centerOfRotationYOffset,
+	currentSpeed, centerOfRotationYOffset,
 	carLength, carWidth, centerOfRotationY;
 	
 	float[] collisionBoxPoints;
@@ -46,28 +53,30 @@ public class Car implements Comparable<Car> {
 	id, username;
 	
 	private Vector2f 
-	movementVector, position, startPos;
+	startPos;
 
 	private ArrayList<String> 
 	stoppingDirections;
 	
+	private Sound topSpeed;
+	
 	public boolean deAcceleratingSoundPlayed = false;
 	
-	private CarProperties stats;
+	private Properties stats;
 	private Level level;
 	private CollisionBox colBox;
 	private CollisionHandler collision;
 	public Controlls controlls;
 
-	public Car(CarProperties stats, String id, int playerNr, Vector2f startArea, Level level) {
+	public Car(Properties stats, String id, int playerNr, Vector2f startArea, Level level) {
 		
-		originalCarLength = stats.carImage.getWidth();
-		originalCarWidth = stats.carImage.getHeight()/2;
+		originalCarLength = stats.image.getWidth();
+		originalCarWidth = stats.image.getHeight()/2;
 		
-		carLength = originalCarLength * stats.carSize;
-		carWidth = originalCarWidth * stats.carSize;
+		carLength = originalCarLength * stats.size;
+		carWidth = originalCarWidth * stats.size;
 		
-		centerOfRotationYOffset = stats.carImage.getHeight()/2 * stats.carSize;
+		centerOfRotationYOffset = stats.image.getHeight()/2 * stats.size;
 		
 		this.stats = stats;
 		this.id = id;
@@ -77,10 +86,15 @@ public class Car implements Comparable<Car> {
 		initVariables();
 		detStartPos(startArea);
 		
-		position = new Vector2f(startPos);
+		controlls = new Controlls(stats, startPos);
 		collision = new CollisionHandler(this);
-		colBox = new CollisionBox(this);
-		controlls = new Controlls(stats);
+		colBox = new CollisionBox(this, 5, 3);
+		
+		try {
+			topSpeed= new Sound("games/furyracers/assets/Sound/carSounds/speed.ogg");
+		} catch (SlickException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void detStartPos(Vector2f carStartPos){
@@ -91,7 +105,7 @@ public class Car implements Comparable<Car> {
 
 		if(previousCar != null){
 			float prevCarStartY = previousCar.getStartPos().y;
-			float prevCarEndY = prevCarStartY + previousCar.getCarWidth();
+			float prevCarEndY = prevCarStartY + previousCar.getWidth();
 			carStartPos.y = prevCarEndY + spaceBetweenCars;
 		}
 		
@@ -99,21 +113,24 @@ public class Car implements Comparable<Car> {
 	}
 
 	private void initVariables() {
-		time = passedChekpoints = laps = 0;
+		time = passedChekpoints = 
+		laps = secsAfctedBySlowDown = 0;
 		currentTime = 0;
 		preventMovement = true;
 		offRoad = false;
 		username = "";
-		finishedRace = false;
+		isRaceFinished = false;
 		startClock = false;
-		movementVector = new Vector2f();
 		stoppingDirections = new ArrayList<String>();
 	}
 
 	public void update(GameContainer container, StateBasedGame game, int deltaTime) throws SlickException, IOException, EncodeException {
 
-		controlls.reactToControlls(deltaTime, preventMovement);
-		rePositionCar(deltaTime);
+		if(explSlowDown)
+			checkIfStillSlowDown(deltaTime);
+			
+		controlls.updateSpeed(deltaTime, preventMovement);
+		controlls.rePosition(deltaTime);
 		checkForEdgeOfMap();
 		checkForCheckpoint();
 		collision.checkForCollision();
@@ -122,18 +139,21 @@ public class Car implements Comparable<Car> {
 		carSounds();
 	}
 
-	public void rePositionCar(int deltaTime) {
-
-		radDeg = (float) Math.toRadians(controlls.getMovementDegrees());
-		currentSpeed = controlls.getCurrentSpeed();
-
-		movementVector.x = (float) Math.cos(radDeg) * currentSpeed * deltaTime/1000;
-		movementVector.y = (float) Math.sin(radDeg) * currentSpeed * deltaTime/1000;
-
-		position.x += movementVector.x;
-		position.y += movementVector.y;
+	private void checkIfStillSlowDown(int deltaTime){
+		
+		secsAfctedBySlowDown += deltaTime;
+		
+		if(secsAfctedBySlowDown < twoSecsInMillis){
+			controlls.changeCurrentSpeed(0);
+		}
+		
+		if(secsAfctedBySlowDown < fiveSecsInMillis){
+			explSlowDown = false;
+			secsAfctedBySlowDown = 0;
+			controlls.changeTopSpeed(2);
+		}
 	}
-
+	
 	public void checkForEdgeOfMap() {
 
 		float[] 
@@ -146,62 +166,83 @@ public class Car implements Comparable<Car> {
 		for (int i = 0; i < colBoxPoints.length; i += 2) {
 
 			if (colBoxPoints[i] < startOfMapX || colBoxPoints[i] > level.getMapWidthPixels() - startOfMapX)
-				position.x -= movementVector.x;
+				controlls.position.x -= controlls.movementVector.x;
 
 			if (colBoxPoints[i + 1] < startOfMapY || colBoxPoints[i + 1] > level.getMapHeightPixels() - startOfMapY)
-				position.y -= movementVector.y;
+				controlls.position.y -= controlls.movementVector.y;
 		}
+	}
+	
+	public String getId(){
+		return id;
 	}
 
 	public void checkForCheckpoint() {
 
-		int tilePosX = (int) (position.x / level.getTileWidth());
-		int tilePosY = (int) (position.y / level.getTileHeight());
+		int tilePosX = (int) (controlls.position.x / level.getTileWidth());
+		int tilePosY = (int) (controlls.position.y / level.getTileHeight());
 
 		tileType = level.getTileType(tilePosX, tilePosY, passedChekpoints);
 		
 		switch (tileType) {
 			case "checkpoint1":
-				passedChekpoints++;
-				if (!Sounds.checkpoint.playing())
-					Sounds.checkpoint.play();
+				checkpoint();
 				break;
 			case "checkpoint2":
-				passedChekpoints++;
-				if (!Sounds.checkpoint.playing())
-					Sounds.checkpoint.play();
+				checkpoint();
 				break;
 			case "checkpoint3":
-				passedChekpoints++;
-				if (!Sounds.checkpoint.playing())
-					Sounds.checkpoint.play();
+				checkpoint();
 				break;
 			case "lap":
-				if(!Sounds.lap.playing() && laps != 3)
-					Sounds.lap.play();
-				laps++;
-				passedChekpoints = 0;
+				lap();
 		}
 		
-		if (laps == maxLaps-1) {
-			if (!GameCore.finalRoundSaid) {
-				Sounds.finalRound.play();
-				GameCore.finalRoundSaid = true;
-			}
+		if (laps == maxLaps-1) 
+			finalLap();
+		
+		else if (laps == maxLaps) 
+			finishedRace();
+	}
+	
+	private void finalLap(){
+		
+		if (!GameCore.finalRoundSaid) {
+			Sounds.finalRound.play();
+			GameCore.finalRoundSaid = true;
 		}
-
-		if (laps == maxLaps) {
-			if (!GameCore.crowdFinishedPlayed) {
-				Sounds.crowdFinish.play();
-				GameCore.crowdFinishedPlayed = true;
-			}
-			finishedRace = true;
-			controlls.throttleKeyUp();
-			controlls.leftKeyUp();
-			controlls.rightKeyUp();
-			controlls.changeDeAcceleration(1.04f);
-			setTime((int) totalTenthsOfSeconds);
+	}
+	
+	private void finishedRace(){
+		
+		if (!GameCore.crowdFinishedPlayed) {
+			Sounds.crowdFinish.play();
+			GameCore.crowdFinishedPlayed = true;
 		}
+		
+		isRaceFinished = true;
+		controlls.throttleKeyUp();
+		controlls.leftKeyUp();
+		controlls.rightKeyUp();
+		controlls.changeDeAcceleration(1.04f);
+		setTime((int) totalTenthsOfSeconds);
+	}
+	
+	private void lap(){
+		
+		laps++;
+		passedChekpoints = 0;
+		
+		if(!Sounds.lap.playing() && laps != 3)
+			Sounds.lap.play();
+	}
+	
+	private void checkpoint(){
+		
+		passedChekpoints++;
+		
+		if (!Sounds.checkpoint.playing())
+			Sounds.checkpoint.play();
 	}
 
 	public void checkForOffRoad() {
@@ -242,18 +283,16 @@ public class Car implements Comparable<Car> {
 	}
 	
 	public void rumbleController(boolean rumbleController) {
-			
+		
 		try {
 			if(rumbleController){
 				GameSession.rumbleControllerOn(id);
 			}else{
 				GameSession.rumbleControllerOff(id);
 			}
-		} catch (IOException e) {
+		}catch(IOException | EncodeException e) {
 			e.printStackTrace();
-		} catch (EncodeException e) {
-			e.printStackTrace();
-		}
+		} 
 	}
 	
 	Vector2f getTurningDirectionVector(){
@@ -268,7 +307,7 @@ public class Car implements Comparable<Car> {
 			angleBeforeCollision = degreesRotated - deltaAngleChange;
 			double toRad = Math.toRadians(angleBeforeCollision);
 			turningVector.x = (float) Math.cos(toRad+Math.PI/2);
-			turningVector.x = (float) Math.sin(toRad+Math.PI/2);
+			turningVector.y = (float) Math.sin(toRad+Math.PI/2);
 			
 			return turningVector;
 		}
@@ -277,7 +316,7 @@ public class Car implements Comparable<Car> {
 			angleBeforeCollision = degreesRotated + deltaAngleChange;
 			double toRad = Math.toRadians(angleBeforeCollision);
 			turningVector.x = (float) Math.cos(toRad-Math.PI/2);
-			turningVector.x = (float) Math.sin(toRad-Math.PI/2);
+			turningVector.y = (float) Math.sin(toRad-Math.PI/2);
 			
 			return turningVector;
 		}
@@ -288,9 +327,9 @@ public class Car implements Comparable<Car> {
 	public void render(Graphics g) {
 
 		float carRotation = controlls.getMovementDegrees();
-		stats.carImage.setCenterOfRotation(0, centerOfRotationYOffset);
-		stats.carImage.setRotation(carRotation);
-		stats.carImage.draw(position.x, position.y, stats.carSize);
+		stats.image.setCenterOfRotation(0, centerOfRotationYOffset);
+		stats.image.setRotation(carRotation);
+		stats.image.draw(controlls.position.x, controlls.position.y, stats.size);
 		colBox.generatePoints();
 	}
 	
@@ -307,14 +346,14 @@ public class Car implements Comparable<Car> {
 			preventMovement = false;
 		}
 
-		if (startTime != 0 && !finishedRace) {
+		if (startTime != 0 && !isRaceFinished) {
 			currentTime = System.nanoTime();
 			nanoSecondsElapsed = currentTime - startTime;
 			minutesElapsed = TimeUnit.NANOSECONDS.toMinutes(nanoSecondsElapsed);
-			secondsElapsed = TimeUnit.NANOSECONDS.toSeconds(nanoSecondsElapsed) - 60 * minutesElapsed;
-			totalTenthsOfSeconds = TimeUnit.NANOSECONDS.toMillis(nanoSecondsElapsed) / 100;
+			secondsElapsed = TimeUnit.NANOSECONDS.toSeconds(nanoSecondsElapsed) - 60*minutesElapsed;
+			totalTenthsOfSeconds = TimeUnit.NANOSECONDS.toMillis(nanoSecondsElapsed)/100;
 			tenthsOfASecondElapsed = totalTenthsOfSeconds
-					- TimeUnit.NANOSECONDS.toSeconds(nanoSecondsElapsed) * 10;
+					- TimeUnit.NANOSECONDS.toSeconds(nanoSecondsElapsed)*10;
 
 			timeElapsed = minutesElapsed + ":" + secondsElapsed + ":" + tenthsOfASecondElapsed;
 		}
@@ -329,7 +368,7 @@ public class Car implements Comparable<Car> {
 	}
 
 	public Image getImage() {
-		return stats.carImage;
+		return stats.image;
 	}
 
 	public void startClock() {
@@ -342,12 +381,12 @@ public class Car implements Comparable<Car> {
 		return maxLaps;
 	}
 
-	public boolean finishedRace() {
-		return finishedRace;
+	public boolean isRaceFinished() {
+		return isRaceFinished;
 	}
 
 	public Vector2f getPosition() {
-		return position;
+		return controlls.getPosition();
 	}
 
 	public int getTime() {
@@ -360,27 +399,34 @@ public class Car implements Comparable<Car> {
 
 	@Override
 	public int compareTo(Car o) {
-		return -(Integer.compare(this.getTime(), o.getTime()));
+		return -(Integer.compare(getTime(), o.getTime()));
 	}
 	
 	
 	private void carSounds() {
 
-		if(currentSpeed < 1 && !Sounds.topSpeed.playing()){
+		if(currentSpeed < 1 && !topSpeed.playing()){
 			if(!Sounds.still.playing())
 				Sounds.still.play();
 		}
-		if(controlls.throttleKeyIsDown){
-			if(!Sounds.topSpeed.playing()){
+		if(controlls.accelerate){
+			if(!topSpeed.playing()){
 				Sounds.still.stop();
-				Sounds.topSpeed.play();
+				topSpeed.play();
 				deAcceleratingSoundPlayed = false;
 			}
 		}else{
-			Sounds.topSpeed.stop();
+			topSpeed.stop();
 			if(!Sounds.still.playing())
 				Sounds.still.play();
 		}
+	}
+	
+	public void slowDown(){
+		controlls.changeCurrentSpeed(0);
+		controlls.changeTopSpeed(0.5f);
+		rumbleController(true);
+		explSlowDown = true;
 	}
 	
 	public void setUsername(String username){
@@ -392,38 +438,48 @@ public class Car implements Comparable<Car> {
 	}
 	
 	public Vector2f getMovementVector(){
-		return movementVector;
+		return controlls.movementVector;
 	}
 	
 	public Vector2f getStartPos(){
 		return startPos;
 	}
 	
-	float getCenterOfRotationYOffset(){
+	public float getCenterOfRotationYOffset(){
 		return centerOfRotationYOffset;
-	}
-	
-	float getCarLength(){
-		return carLength;
-	}
-	
-	float getCarWidth(){
-		return carWidth;
 	}
 	
 	float getCenterOfRotationY(){
 		return centerOfRotationY;
 	}
 	
-	float getRotationRad(){
-		return radDeg;
-	}
-	
 	public CollisionBox getCollisionBox(){
 		return colBox;
 	}
 	
+	public Polygon getBoxShape(){
+		return colBox.getBox();
+	}
+	
 	public void setOffroad(boolean isOffroad){
 		offRoad = isOffroad;
+	}
+
+	public float getWidth() {
+		
+		return carWidth;
+	}
+
+	public float getLength() {
+		return carLength;
+	}
+	
+	public Vector2f getMiddlePoint(){
+		return colBox.getMiddleOfBoxPoint();
+	}
+
+	@Override
+	public float getRadDeg() {
+		return controlls.getRadDeg();
 	}
 }

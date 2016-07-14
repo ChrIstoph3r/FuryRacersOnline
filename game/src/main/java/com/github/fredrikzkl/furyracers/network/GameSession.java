@@ -36,6 +36,7 @@ public class GameSession {
 	}
 	
 	public void onMessage(Session session, String message) throws IOException, EncodeException, SlickException {
+		
 		JsonReader jsonReader = Json.createReader(new StringReader(message));
 		JsonObject jsonObj = jsonReader.readObject();
 		jsonReader.close();
@@ -47,6 +48,7 @@ public class GameSession {
 		String action = jsonObj.getString("action");
 
 		switch (action) {
+		
 			
 			case "get username": {
 				
@@ -124,19 +126,24 @@ public class GameSession {
 
 	private void removePlayer(String id){
 		
-		int spot = 0;
+		System.out.println("PLAYER " + id + " REMOVED!");
+
 		for (Player player : players) {
 			if (player.getId().equals(id)) {
-				spot = player.getPlayerNr();
+				int spot = player.getPlayerNr();
+				players.remove(spot-1);
+				GameCore.cars.remove(spot-1);
+				break;
 			}
 		}
-		players.remove(spot-1);
 	}
 	
 	private static void sendToBackend(String action, String data) throws IOException, EncodeException {
 		backend.getBasicRemote().sendObject(Json.createObjectBuilder()
 				.add("action", action)
 				.add("data", data).build());
+		
+		System.out.println("Sending action: " + action + " and data: " + data);
 	}
 	
 	private static void sendToClient(String recieverId, String action, String data) throws IOException, EncodeException{
@@ -148,6 +155,8 @@ public class GameSession {
 		         .add("data", data)).build();
 		 
 		backend.getBasicRemote().sendObject(message);
+		
+		System.out.println("Sending action: " + action + " and data: " + data + " to: " + recieverId);
 	}
 	
 	private static void setUsername(String id, String username){
@@ -167,12 +176,20 @@ public class GameSession {
 		sendToClient(id, "rumble on", "");
 	}
 	
+	public static void itemEquipped(String id, String item) throws IOException, EncodeException{
+		sendToClient(id, "item equipped", item);
+	}
+	
 	public static void carColorToController(String recieverId, String colorCode) throws IOException, EncodeException{
 		sendToClient(recieverId, "set color", colorCode);
 	}
 	
 	public static void carModelToController(String recieverId, String carModel) throws IOException, EncodeException{
 		sendToClient(recieverId, "set carModel", carModel);
+	}
+	
+	public static void removeLaunchButton(String recieverId) throws IOException, EncodeException{
+		sendToClient(recieverId, "item used", "");
 	}
 	
 	private void buttonDown(String from, String data) throws IOException, EncodeException, SlickException{
@@ -192,8 +209,9 @@ public class GameSession {
 		}
 		
 		if(!playerExists){
-			menu.printConsole( from + " doesn't exist as a player! Adding to plyerlist..");
+			
 			int playerNr = players.size()+1;
+			menu.printConsole( from + " isn't a player! Added to player list");
 			addPlayer(from, playerNr);
 		}
 	}
@@ -201,6 +219,7 @@ public class GameSession {
 	private void buttonUp(String from, String data){
 		
 		if (gameState == 1) { 
+			
 			for (Player player : players) {
 				if (player.getId().equals(from)) {
 					player.buttonUp(data);
@@ -211,6 +230,7 @@ public class GameSession {
 
 	public void closeConnection() throws IOException, EncodeException{
 		sendToBackend("disconnect", "");
+		
 	}
 
 	private void addPlayer(String id, int playerNr) throws IOException, EncodeException, SlickException {

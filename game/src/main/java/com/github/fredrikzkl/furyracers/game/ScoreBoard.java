@@ -28,7 +28,7 @@ public class ScoreBoard {
 	resultsBoardWidth, highscoreBoardWidth, 
 	endXposResults, screenHeight, margin, 
 	endOfResultsY, movementPerUpdate, screenWidth,
-	scalingValue, resultPosX, resultPosY, 
+	scalingValue, resultsBoardPosX, resultsBoardPosY, 
 	highScorePosX, highScorePosY;
 	
 	private String secondsLeft = "";
@@ -51,9 +51,9 @@ public class ScoreBoard {
 		highscoreBoardWidth = Sprites.highscoresBoard.getWidth() * scalingValue;
 		margin = resultsBoardWidth / 10;
 
-		resultPosX = - resultsBoardWidth;
+		resultsBoardPosX = - resultsBoardWidth;
 		highScorePosX = screenWidth + highscoreBoardWidth;
-		resultPosY = Application.screenSize.height / 10;
+		resultsBoardPosY = Application.screenSize.height / 10;
 		highScorePosY = Application.screenSize.height / 10;
 		endXposResults = screenWidth / 2 - resultsBoardWidth;
 		movementPerUpdate = screenWidth/342f;
@@ -70,8 +70,8 @@ public class ScoreBoard {
 		
 		drawBoardBackgrounds();
 		
-		if (resultPosX < endXposResults) {
-			resultPosX += movementPerUpdate;
+		if (resultsBoardPosX < endXposResults) {
+			resultsBoardPosX += movementPerUpdate;
 			highScorePosX -= movementPerUpdate*3/2;
 		} else {
 			drawScores();
@@ -86,7 +86,7 @@ public class ScoreBoard {
 	
 	private void drawBoardBackgrounds(){
 		
-		Sprites.resultsBoard.draw(resultPosX, resultPosY, scalingValue);
+		Sprites.resultsBoard.draw(resultsBoardPosX, resultsBoardPosY, scalingValue);
 		Sprites.highscoresBoard.draw(highScorePosX, highScorePosY, scalingValue);
 	}
 	
@@ -101,7 +101,7 @@ public class ScoreBoard {
 	
 	private void drawResultsHeader(){
 		
-		Fonts.scoreBoardHeader.drawString(resultPosX + margin, resultPosY + margin, "Results:", Fonts.headerColor);
+		Fonts.scoreBoardHeader.drawString(resultsBoardPosX + margin, resultsBoardPosY + margin, "Results:", Fonts.headerColor);
 	}
 	
 	private void drawRaceResults(){
@@ -110,7 +110,7 @@ public class ScoreBoard {
 		Collections.sort(sortedCars);
 		int amountOfCars = sortedCars.size();
 		int startIndex = amountOfCars - 1;
-		float yPos = resultPosY;
+		float yPos = resultsBoardPosY;
 		
 		for (int i = startIndex; i > -1; i--) {
 			Car car = sortedCars.get(i);
@@ -118,8 +118,8 @@ public class ScoreBoard {
 			String player = "Player " + car.getPlayerNr() + ":";
 			
 			float yOffset = margin + scoreBoardFontHeight *(amountOfCars-i);
-			float xPosPlayerNr = resultPosX + margin;
-			yPos = resultPosY + yOffset;
+			float xPosPlayerNr = resultsBoardPosX + margin;
+			yPos = resultsBoardPosY + yOffset;
 			
 			Fonts.scoreBoardText.drawString(xPosPlayerNr, yPos, player);
 			
@@ -133,7 +133,7 @@ public class ScoreBoard {
 	
 	private void drawTotalScoreHeader(){
 		
-		float xPos = resultPosX + margin;
+		float xPos = resultsBoardPosX + margin;
 		float yPos = endOfResultsY + margin;
 		
 		Fonts.scoreBoardHeader.drawString(xPos, yPos, "Total Score:", Fonts.headerColor);
@@ -145,7 +145,7 @@ public class ScoreBoard {
 		Collections.sort(sortedPlayers);
 		
 		int i = 0;
-		float xPos = resultPosX + margin;
+		float xPos = resultsBoardPosX + margin;
 		
 		for (Player player : sortedPlayers) {
 			
@@ -181,7 +181,7 @@ public class ScoreBoard {
 		
 		Fonts.scoreBoardHeader.drawString(xPos, yPos, secondsLeft);
 
-		if (initialSeconds - secondsElapsed == 0) {
+		if (initialSeconds - secondsElapsed <= 0) {
 			returnToMenuTimerDone = true;
 		}
 	}

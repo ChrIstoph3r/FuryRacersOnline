@@ -32,9 +32,9 @@ class Layer {
 	}
 	
 	private boolean outOfFrame(float x){
-		if(x <= outOfFrameX){
+		if(x <= outOfFrameX)
 			return true;
-		}
+		
 		return false;
 	}
 

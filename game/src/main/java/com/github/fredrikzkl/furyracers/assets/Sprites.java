@@ -1,7 +1,9 @@
 package com.github.fredrikzkl.furyracers.assets;
 
+import org.newdawn.slick.Animation;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
+import org.newdawn.slick.SpriteSheet;
 
 public class Sprites {
 	
@@ -10,14 +12,17 @@ public class Sprites {
 	mustangR, mustangB, mustangG, mustangY, 
 	camaroR, camaroB, camaroG, camaroY, 
 	vRaptorR, vRaptorB, vRaptorG, vRaptorY,
-	city1, city2, hills, moon, stars1, stars2;
+	city1, city2, hills, moon, stars1, stars2,
+	missile;
 	
 	private static String path = "games/furyracers/assets/";
 	
 	public static void initialize(){
 		
-		
 		try {
+			
+			
+			
 			icons = new Image( path + "Sprites/menu/menu_sheet.png");
 			cars = new Image( path + "Sprites/menu/carSheet.png");
 			
@@ -39,6 +44,8 @@ public class Sprites {
 			vRaptorG = new Image( path + "Sprites/cars/fr_pickup_green.png");
 			vRaptorB = new Image( path + "Sprites/cars/fr_pickup_blue.png");
 			vRaptorY = new Image( path + "Sprites/cars/fr_pickup_yellow.png");
+			
+			missile = new Image( path + "Sprites/missile/spr_missile.png");
 			
 			city1 = new Image(path + "Sprites/background/city1.png");
 			city2 = new Image(path + "Sprites/background/city2.png");

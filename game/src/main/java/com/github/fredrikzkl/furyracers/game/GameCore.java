@@ -12,6 +12,7 @@ import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
+import org.newdawn.slick.geom.Polygon;
 import org.newdawn.slick.geom.RoundedRectangle;
 import org.newdawn.slick.geom.Vector2f;
 import org.newdawn.slick.state.BasicGameState;
@@ -20,8 +21,9 @@ import org.newdawn.slick.state.StateBasedGame;
 import com.github.fredrikzkl.furyracers.Application;
 import com.github.fredrikzkl.furyracers.assets.Fonts;
 import com.github.fredrikzkl.furyracers.assets.Sounds;
+import com.github.fredrikzkl.furyracers.assets.Sprites;
 import com.github.fredrikzkl.furyracers.car.Car;
-import com.github.fredrikzkl.furyracers.car.CarProperties;
+import com.github.fredrikzkl.furyracers.car.Properties;
 import com.github.fredrikzkl.furyracers.network.GameSession;
 
 public class GameCore extends BasicGameState {
@@ -44,17 +46,27 @@ public class GameCore extends BasicGameState {
 	private boolean 
 	raceStarted, countdownStarted, startGoSignal, goSignal, 
 	raceFinished, threePlayed, twoPlayed, onePlayed, goPlayed;
+
+	private static boolean exploding;
+
+	private static boolean 
+	makeNewMissile;
 	
 	public static boolean 
-	finalRoundSaid, crowdFinishedPlayed;
+	finalRoundSaid, crowdFinishedPlayed,
+	itmEqpd;
 
 	private String IP;
+
+	private static String itmTargetedFor;
 	
+	private ScoreBoard scoreboard;
 	public static List<Car> cars;
 	public List<Player> players;
 	private Camera camera;
 	private Level level;
-	private ScoreBoard scoreboard;
+	static Item missile;
+
 
 	public void init(GameContainer container, StateBasedGame sbg) throws SlickException {
 		initVariables();
@@ -77,6 +89,7 @@ public class GameCore extends BasicGameState {
 		checkForKeyboardInput(container, game);
 		startCountdown();
 		checkCountdown();
+		updateItem(deltaTime);
 		updateCars(container, game, deltaTime);
 		checkDistances();
 		camera.zoomLogic();
@@ -86,7 +99,10 @@ public class GameCore extends BasicGameState {
 	public void render(GameContainer container, StateBasedGame sbg, Graphics g) throws SlickException {
 
 		firstCamRelocation(g);
+		level.drawSubMap(g);
 		level.drawCars(g, cars);
+		level.drawTopMap(g);
+		level.drawMissile(g, missile);
 		secondCamRelocation(g);
 		drawPlayerInfo(g);
 		countdown(g);
@@ -96,6 +112,63 @@ public class GameCore extends BasicGameState {
 		if (scoreboard.isReturnToMenuTimerDone()) {
 			returnToMenu(container, sbg);
 		}
+	}
+	
+	public void updateItem(int deltaTime){
+		
+		if(makeNewMissile){
+			genItemOnMap();
+			makeNewMissile = false;
+			System.out.println("Making new missile(GameCore.updateItem)");
+		}
+		
+		missile.update(deltaTime, false);
+	}
+	
+	public static void activateMissile(String idOfLanchrCar) throws IOException, EncodeException{
+		
+		Car carToTarget = findRndmCarExcept(idOfLanchrCar);
+		
+		if(carToTarget == null) return; 
+		
+		missile.launchMissile(carToTarget);
+	}
+	
+	private static Car findRndmCarExcept(String carId){
+		
+		while(true){
+			
+			if(cars.size()<=1) return null;
+			
+			int rndmCarIndx = randomInt(0, cars.size()-1);
+			
+			Car carToTarget = cars.get(rndmCarIndx); 
+			
+			if(!carToTarget.getId().equals(carId))
+				return carToTarget;
+		}
+	}
+	
+	private static int randomInt(int min, int max){
+	
+		int range = (max - min) + 1;  
+		return (int) (Math.random()*range) + min;
+	}
+	
+	public void genItemOnMap(){
+		
+		int numOfRoadTiles = level.getRoadTileIDs().size();
+		
+		int rndmRoadTileIndx = randomInt(0, numOfRoadTiles-1);
+		
+		int propertyNumberMissile = 12;
+		
+		Properties stats = Properties.values()[propertyNumberMissile];
+		
+		Vector2f startCoords = level.getRoadTileIDs().get(rndmRoadTileIndx);
+		
+		missile = new Item(stats, level.tilePosToPos(startCoords));
+
 	}
 
 	public void createCars() throws SlickException {
@@ -122,27 +195,30 @@ public class GameCore extends BasicGameState {
 
 	private void countdown(Graphics g) {
 
-		if (!raceStarted) {
+		if(!raceStarted) {
 			countdownAnnouncer();
 			String secondsLeftString = "" + secondsLeft;
 			drawCountdown(secondsLeftString);
 			
-		} else if (startGoSignal) {
+		}else if(startGoSignal){
 			startGoSignalTime = System.currentTimeMillis();
 			startGoSignal = false;
 			goSignal = true;
 		}
 
-		if (goSignal) {
+		if(goSignal){
+			
 			long currentTime = System.currentTimeMillis();
 			goSignalTimeElapsed = currentTime - startGoSignalTime;
-			if (goSignalTimeElapsed < 1500) {
+			
+			if(goSignalTimeElapsed < 1500){
 				drawCountdown("RACE!");
-				if (!goPlayed) {
+				
+				if(!goPlayed){
 					Sounds.go.play();
 					goPlayed = true;
 				}
-			} else {
+			}else {
 				goSignal = false;
 			}
 		}
@@ -153,11 +229,12 @@ public class GameCore extends BasicGameState {
 		Color countdownColor = new Color(221, 0, 0);
 		int stringWidth = Fonts.header.getWidth(string);
 		float margin = screenHeight/10;
-		float startX = screenWidth / 2 - stringWidth/2 + margin;
-		float startY = screenHeight / 2 - margin;
+		float startX = screenWidth/2 - stringWidth/2 + margin;
+		float startY = screenHeight/2 - margin;
 		
 		Fonts.header.drawString(startX, startY, string, countdownColor);
 	}
+	
 	private void countdownAnnouncer(){
 		
 		if (secondsLeft > 2) {
@@ -184,11 +261,11 @@ public class GameCore extends BasicGameState {
 		float 
 		margin = screenWidth/160,
 		fontHeight = Fonts.infoFont.getHeight(),
-		startX =  screenWidth / 40,
+		startX =  screenWidth/40,
 		infoBoxHeight = fontHeight*2 + margin*2,
 		cornerRadius = 4f;
 
-		for (int i = 0; i < cars.size(); i++) {
+		for (int i = 0; i < players.size(); i++) {
 			
 			Color 
 			carColor = players.get(i).getCarColor();
@@ -203,7 +280,7 @@ public class GameCore extends BasicGameState {
 			
 			float 
 		    infoBoxWidth = infoBoxWidth(usernameLength, lapsLength) + margin*2,
-			startY = screenHeight / 10 + (infoBoxHeight + margin*2) * i,
+			startY = screenHeight/10 + (infoBoxHeight + margin*2)*i,
 			
 			usernameStartY = startY + margin,
 			lapsStartY = usernameStartY + margin/2 + fontHeight;
@@ -217,33 +294,46 @@ public class GameCore extends BasicGameState {
 		}
 
 	}
+	
 	private int infoBoxWidth(int usernameLength, int lapsLength ){
-		if(usernameLength < lapsLength){
+		if(usernameLength < lapsLength)
 			return lapsLength;
-		}
 		
 		return usernameLength;
 	}
 
-	public void updateCars(GameContainer container, StateBasedGame game, int deltaTime) throws SlickException {
+	public void updateCars(GameContainer container, StateBasedGame game, int deltaTime) throws SlickException{
 
 		int carsFinished = 0;
 
 		for (Car car : cars) {
 			try {
+				
 				car.update(container, game, deltaTime);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (EncodeException e) {
+				missile.checkIntersection(car);
+				
+			} catch (IOException | EncodeException e) {
 				e.printStackTrace();
 			}
-			if (car.finishedRace())
+			
+			if (car.isRaceFinished())
 				carsFinished++;
 		}
 		
-		if(carsFinished == cars.size()){
+		if(carsFinished == cars.size())
 			raceFinished = true;
+		
+	}
+	
+	public static void slowDownCar(String carId){
+		for(Car car : cars){
+			if(car.getId() == carId)
+				car.slowDown();
 		}
+	}
+	
+	public static void setMakeNewMissile(){
+		makeNewMissile = true;
 	}
 
 	public void returnToMenu(GameContainer container, StateBasedGame game) throws SlickException {
@@ -251,7 +341,11 @@ public class GameCore extends BasicGameState {
 		for(Car car : cars){
 			car.controlls.resetTopSpeed();
 			car.controlls.resetDeAcceleration();
-			car.rumbleController(false);
+		}
+		
+		for(Player player : players){
+			player.rumbleController(false);
+			player.removeLaunchButton();
 		}
 		
 		Application.closeConnection();
@@ -268,52 +362,49 @@ public class GameCore extends BasicGameState {
 			secondsElapsed = TimeUnit.NANOSECONDS.toSeconds(nanoSecondsElapsed);
 			secondsLeft = 3 - secondsElapsed;
 
-			if (secondsLeft <= 0) {
+			if (secondsLeft <= 0)
 				startRace();
-			}
+			
 		}
 	}
 
 	public void startRace() {
 		for (Car car : cars)
 			car.startClock();
+		
 		raceStarted = true;
 	}
 
 	private void checkDistances() {
+		
+		Vector2f randmHighNum = new Vector2f(level.getMapWidthPixels(), level.getMapHeightPixels());
 
-		Vector2f longestDistance = new Vector2f();
-		Vector2f shortestDistance = new Vector2f(level.getMapWidthPixels(), level.getMapHeightPixels());
-		Vector2f closestEdge = new Vector2f(level.getMapWidthPixels(), level.getMapHeightPixels());
+		Vector2f furthestFromMapStartPoint = new Vector2f();
+		Vector2f closestToMapStartPoint = new Vector2f(randmHighNum.x, randmHighNum.y);
+		
 
 		for (Car car : cars) {
-			if (car.getPosition().x > longestDistance.x) {
-				longestDistance.x = car.getPosition().x;
+			if (car.getPosition().x > furthestFromMapStartPoint.x) {
+				furthestFromMapStartPoint.x = car.getPosition().x;
 			}
-			if (car.getPosition().x < shortestDistance.x) {
-				shortestDistance.x = car.getPosition().x;
+			if (car.getPosition().x < closestToMapStartPoint.x) {
+				closestToMapStartPoint.x = car.getPosition().x;
 			}
-			if (car.getPosition().y > longestDistance.y) {
-				longestDistance.y = car.getPosition().y;
+			if (car.getPosition().y > furthestFromMapStartPoint.y) {
+				furthestFromMapStartPoint.y = car.getPosition().y;
 			}
-			if (car.getPosition().y < shortestDistance.y) {
-				shortestDistance.y = car.getPosition().y;
-			}
-			if (car.getPosition().x < closestEdge.x) {
-				closestEdge.x = car.getPosition().x;
-			}
-			if (car.getPosition().y < closestEdge.y) {
-				closestEdge.y = car.getPosition().y;
+			if (car.getPosition().y < closestToMapStartPoint.y) {
+				closestToMapStartPoint.y = car.getPosition().y;
 			}
 		}
 
 		Vector2f deltaDistance = new Vector2f();
 
-		deltaDistance.x = longestDistance.x - shortestDistance.x;
-		deltaDistance.y = longestDistance.y - shortestDistance.y;
+		deltaDistance.x = furthestFromMapStartPoint.x - closestToMapStartPoint.x;
+		deltaDistance.y = furthestFromMapStartPoint.y - closestToMapStartPoint.y;
 
 		camera.setDeltaDistances(deltaDistance);
-		camera.setClosestEdge(closestEdge);
+		camera.setClosestEdge(closestToMapStartPoint);
 	}
 
 	public void checkForKeyboardInput(GameContainer container, StateBasedGame game) throws SlickException {
@@ -330,12 +421,12 @@ public class GameCore extends BasicGameState {
 
 	public void createCar(int nr, String id, int playerChoice) throws SlickException {
 
-		CarProperties stats = CarProperties.values()[playerChoice];
+		Properties stats = Properties.values()[playerChoice];
 		
 		Vector2f startArea = new Vector2f();
 
-		startArea.x = level.getStartCoordinates().x - level.getTileWidth() * 4;
-		startArea.y = level.getStartCoordinates().y - level.getTileHeight() * 4;
+		startArea.x = level.getStartCoordinates().x - level.getTileWidth()*4;
+		startArea.y = level.getStartCoordinates().y - level.getTileHeight()*4;
 		
 		cars.add(new Car(stats, id, nr, startArea, level));
 	}
@@ -352,12 +443,15 @@ public class GameCore extends BasicGameState {
 	}
 
 	public void initVariables() {
+		
 		threePlayed = twoPlayed = onePlayed = 
 		goPlayed = finalRoundSaid = 
 		crowdFinishedPlayed = raceFinished = 
-		raceStarted = countdownStarted = false;
+		raceStarted = countdownStarted = itmEqpd = false;
 		
-		startGoSignal = true;
+		startGoSignal = makeNewMissile = true;
+		
+		itmTargetedFor = "";
 		
 		screenWidth = Application.screenSize.width;
 		screenHeight = Application.screenSize.height;
@@ -380,9 +474,8 @@ public class GameCore extends BasicGameState {
 	
 	public static Car getCar(int playerNr){
 		
-		if(playerNr < 1){
+		if(playerNr < 1)
 			return null;
-		}
 		
 		return cars.get(playerNr-1);
 	}
@@ -390,5 +483,4 @@ public class GameCore extends BasicGameState {
 	public int getID() {
 		return 1;
 	}
-
 }

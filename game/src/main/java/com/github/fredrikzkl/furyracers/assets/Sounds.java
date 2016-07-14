@@ -17,12 +17,14 @@ public class Sounds {
 	finalRound, crowdFinish,
 	checkpoint, lap, still,
 	topSpeed, 
-	scoreboardClose, scoreboardMove;
+	scoreboardClose, scoreboardMove,
+	explosion, missileLaunch, missilePickUp;
 	
 	public static void initialize(){
 		
 		try {
 			String path = "games/furyracers/assets/Sound/";
+			
 			
 			menuMusic = new Music(path + "menu.ogg");
 			car_select = new Sound(path + "car_select.ogg");
@@ -45,6 +47,10 @@ public class Sounds {
 			topSpeed = new Sound(path + "carSounds/speed.ogg");
 			scoreboardClose = new Sound(path + "scoreBoard/closed.ogg");
 			scoreboardMove = new Sound(path + "scoreBoard/move.ogg");
+			explosion = new Sound(path + "Missile/missileExploding2.ogg");
+			missileLaunch = new Sound(path + "Missile/missileLaunch.ogg");
+			missilePickUp = new Sound(path + "Missile/missilePickUp.ogg");
+			
 		} catch (SlickException e) {
 			System.out.println("Could not load sound file" + e);
 			e.printStackTrace();

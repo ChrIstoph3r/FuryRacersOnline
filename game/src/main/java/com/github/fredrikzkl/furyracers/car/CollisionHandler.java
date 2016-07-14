@@ -164,24 +164,30 @@ public class CollisionHandler {
 
 		ArrayList<String> stopCarMovement = new ArrayList<String>();
 
-		int tileX = (int) (xCarPos / Level.tileWidth), 
-			tileY = (int) (yCarPos / Level.tileHeight);
+		int 
+		tileX = (int) (xCarPos / Level.tileWidth), 
+		tileY = (int) (yCarPos / Level.tileHeight);
 
-		boolean leftTileIsObstacle = isCollisionObstacle(tileX - 1, tileY),
-				rightTileIsObstacle = isCollisionObstacle(tileX + 1, tileY),
-				topTileIsObstacle = isCollisionObstacle(tileX, tileY - 1),
-				bottomTileIsObstacle = isCollisionObstacle(tileX, tileY + 1);
+		boolean 
+		leftTileIsObstacle = isCollisionObstacle(tileX - 1, tileY),
+		rightTileIsObstacle = isCollisionObstacle(tileX + 1, tileY),
+		topTileIsObstacle = isCollisionObstacle(tileX, tileY - 1),
+		bottomTileIsObstacle = isCollisionObstacle(tileX, tileY + 1);
 
-		boolean carMovingLeft = (xVector < 0), carMovingRight = (xVector > 0),
-				carMovingUp = (yVector < 0), carMovingDown = (yVector > 0);
+		boolean 
+		carMovingLeft = (xVector < 0), carMovingRight = (xVector > 0),
+		carMovingUp = (yVector < 0), carMovingDown = (yVector > 0);
 
-		int tileStartX = tileX * Level.tileWidth, 
-			tileStartY = tileY * Level.tileHeight;
-		int tileEndX = tileStartX + Level.tileWidth - 1, 
-			tileEndY = tileStartY + Level.tileHeight - 1;
+		int 
+		tileStartX = tileX * Level.tileWidth, 
+		tileStartY = tileY * Level.tileHeight,
+	 
+		tileEndX = tileStartX + Level.tileWidth - 1, 
+		tileEndY = tileStartY + Level.tileHeight - 1;
 
-		float slope = yVector / xVector;
-		float constant = yCarPos - slope * xCarPos; // c = y - ax
+		float 
+		slope = yVector / xVector,
+		constant = yCarPos - slope * xCarPos; // c = y - ax
 
 		intersectionPointsOfLineWithTile(slope, constant, tileStartX, tileStartY, tileEndX, tileEndY);
 		checkIntersectionsWithTile(tileStartX, tileStartY, tileEndX, tileEndY);
@@ -293,7 +299,7 @@ public class CollisionHandler {
 		/*The line is a representation of the cars vector direction*/
 		/*This method finds the intersection points between the line and the tile(The tile the car has landed on).*/
 		
-		yOfTileEndX = slope*tileEndX + constant; // When the line crosses the x-value of the tile's right side, this is the lines y-value (y = ax + c)
+		yOfTileEndX = slope*tileEndX + constant; // When the line crosses the x-value of the tile's right side, yOfTileEndX is the lines y-value (y = ax + c)
 		yOfTileStartX = slope*tileStartX + constant;
 												
 		xOfTileEndY = (tileEndY - constant)/slope; // x = (y-c)/a

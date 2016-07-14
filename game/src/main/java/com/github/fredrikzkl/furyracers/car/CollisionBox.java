@@ -3,34 +3,40 @@ package com.github.fredrikzkl.furyracers.car;
 import org.newdawn.slick.geom.Polygon;
 import org.newdawn.slick.geom.Vector2f;
 
+import com.github.fredrikzkl.furyracers.Box;
+
 public class CollisionBox {
 	
-	private static final int amountLength = 5;
-	private static final int amountWidth = 3;
-	private Car car;
-	private float carWidth;
-	private float carLength;
+	private Box boxedFigure;
+	private float boxWidth;
+	private float boxLength;
+	private Vector2f backLeft;
 	private Polygon collisionBox;
+	private int amntPntsLngth, amntPntsWdth;
 	
-	public CollisionBox(Car car){
-		this.car = car;
-		carWidth = car.getCarWidth();
-		carLength = car.getCarLength();
+	
+	public CollisionBox(Box boxedFigure, int amntPntsLngth, int amntPntsWdth){
+		this.boxedFigure = boxedFigure;
+		boxWidth = boxedFigure.getWidth();
+		boxLength = boxedFigure.getLength();
 		collisionBox = new Polygon();
+		
+		this.amntPntsLngth = amntPntsLngth;
+		this.amntPntsWdth = amntPntsWdth;
 	}
 	
 	public void generatePoints(){
 		
-		float centerOfRotationX = car.getPosition().x;
-		float centerOfRotationY  = car.getPosition().y + car.getCenterOfRotationYOffset();
-		float radDeg = car.getRotationRad();
+		float centerOfRotationX = boxedFigure.getPosition().x;
+		float centerOfRotationY  = boxedFigure.getPosition().y + boxedFigure.getCenterOfRotationYOffset();
+		float radDeg = boxedFigure.getRadDeg();
 		collisionBox = new Polygon();
 		collisionBox.setClosed(true);
 
-		float backLeftX = centerOfRotationX + (float)(Math.cos(radDeg+Math.PI/2)*carWidth/2),
-			  backLeftY = centerOfRotationY + (float)(Math.sin(radDeg+Math.PI/2)*carWidth/2);
+		float backLeftX = centerOfRotationX + (float)(Math.cos(radDeg+Math.PI/2)*boxWidth/2),
+			  backLeftY = centerOfRotationY + (float)(Math.sin(radDeg+Math.PI/2)*boxWidth/2);
 		
-		Vector2f backLeft = new Vector2f(backLeftX, backLeftY);
+		backLeft = new Vector2f(backLeftX, backLeftY);
 		
 		Vector2f frontLeft = createPointsLeftOfCar(backLeft, radDeg);
 		Vector2f frontRight = createPointsTopOfCar(frontLeft, radDeg);
@@ -43,10 +49,10 @@ public class CollisionBox {
 		
 		Vector2f newPoint = new Vector2f(0,0);
 		
-		for(int i = 0; i < amountLength; i++){
+		for(int i = 0; i < amntPntsLngth; i++){
 			
-			newPoint.x = (float) (backLeft.x +  Math.cos(radDeg)*carLength*i / (amountLength-1));
-			newPoint.y = (float) (backLeft.y +  Math.sin(radDeg)*carLength*i / (amountLength-1));
+			newPoint.x = (float) (backLeft.x + Math.cos(radDeg)*boxLength*i / (amntPntsLngth-1));
+			newPoint.y = (float) (backLeft.y + Math.sin(radDeg)*boxLength*i / (amntPntsLngth-1));
 			
 			collisionBox.addPoint(newPoint.x, newPoint.y);
 		}
@@ -54,29 +60,31 @@ public class CollisionBox {
 		return newPoint;
 	}
 	
-	private Vector2f createPointsTopOfCar(Vector2f frontLeft,float radDeg){
+	private Vector2f createPointsTopOfCar(Vector2f frontLeft, float radDeg){
 		
 		Vector2f newPoint = new Vector2f(0,0);
 		
-		for(int i = 1; i < amountWidth; i++){
+		for(int i = 1; i < amntPntsWdth; i++){
 			
-			 newPoint.x = (float) (frontLeft.x +  Math.cos(radDeg-Math.PI/2)*carWidth*i / (amountWidth-1));
-			 newPoint.y = (float) (frontLeft.y +  Math.sin(radDeg-Math.PI/2)*carWidth*i / (amountWidth-1));
+			 newPoint.x = (float) (frontLeft.x +  Math.cos(radDeg-Math.PI/2)*boxWidth*i / (amntPntsWdth-1));
+			 newPoint.y = (float) (frontLeft.y +  Math.sin(radDeg-Math.PI/2)*boxWidth*i / (amntPntsWdth-1));
 			
 			collisionBox.addPoint(newPoint.x, newPoint.y);
 		}
 		
 		return newPoint;
 	}
+	
+	
 	
 	private Vector2f createPointsRightOfCar(Vector2f frontRight, float radDeg){
 		
 		Vector2f newPoint = new Vector2f(0,0); 
 		
-		for(int i = 1; i < amountLength; i++){
+		for(int i = 1; i < amntPntsLngth; i++){
 						
-			newPoint.x = (float) (frontRight.x +  Math.cos(radDeg+Math.PI)*carLength*i / (amountLength-1));
-			newPoint.y = (float) (frontRight.y +  Math.sin(radDeg+Math.PI)*carLength*i / (amountLength-1));
+			newPoint.x = (float) (frontRight.x +  Math.cos(radDeg+Math.PI)*boxLength*i / (amntPntsLngth-1));
+			newPoint.y = (float) (frontRight.y +  Math.sin(radDeg+Math.PI)*boxLength*i / (amntPntsLngth-1));
 			
 			collisionBox.addPoint(newPoint.x, newPoint.y);
 		}
@@ -88,21 +96,39 @@ public class CollisionBox {
 		
 		Vector2f newPoint = new Vector2f(0,0);
 
-		for(int i = 1; i < amountWidth-1; i++){
+		for(int i = 1; i < amntPntsWdth-1; i++){
 			
-			newPoint.x = (float) (backRight.x +  Math.cos(radDeg+Math.PI/2)*carWidth*i / (amountWidth-1));
-			newPoint.y = (float) (backRight.y +  Math.sin(radDeg+Math.PI/2)*carWidth*i / (amountWidth-1));
+			newPoint.x = (float) (backRight.x +  Math.cos(radDeg+Math.PI/2)*boxWidth*i / (amntPntsWdth-1));
+			newPoint.y = (float) (backRight.y +  Math.sin(radDeg+Math.PI/2)*boxWidth*i / (amntPntsWdth-1));
 				
 			collisionBox.addPoint(newPoint.x, newPoint.y);
 		}
 	}
+	
+	public Vector2f getMiddleOfBoxPoint(){
+		
+		float radDeg = boxedFigure.getRadDeg();
+		
+		Vector2f middleLeftOfBox = new Vector2f(0,0);
+		
+		middleLeftOfBox.x = (float) (backLeft.x + Math.cos(radDeg)*boxLength/2);
+		middleLeftOfBox.y = (float) (backLeft.y + Math.sin(radDeg)*boxLength/2);
+		
+		Vector2f middleOfBox = new Vector2f(0,0);
+		
+		middleOfBox.x = (float) (middleLeftOfBox.x + Math.cos(radDeg-Math.PI/2)*boxWidth/2);
+		middleOfBox.y = (float) (middleLeftOfBox.y + Math.sin(radDeg-Math.PI/2)*boxWidth/2);
+		
+		return middleOfBox;
+	}
+	
 	
 	float[] getPoints(){
 		
 		return collisionBox.getPoints();
 	}
 	
-	Polygon getBox(){
+	public Polygon getBox(){
 		return collisionBox;
 	}
 	

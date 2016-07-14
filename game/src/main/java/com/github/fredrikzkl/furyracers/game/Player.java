@@ -142,7 +142,7 @@ public class Player implements Comparable<Player>{
 	public int compareTo(Player o) {
 		return Integer.compare(this.getScore(), o.getScore());
 	}
-	public void buttonDown(String data) {
+	public void buttonDown(String data) throws IOException, EncodeException {
 		
 		switch (data) {
 		case "0":
@@ -156,6 +156,11 @@ public class Player implements Comparable<Player>{
 			break;
 		case "3":
 			getCar().controlls.leftKeyDown();
+			break;
+		case "4":
+			GameCore.activateMissile(id);
+			System.out.println("Launch(Player.buttonDown)");
+			break;
 		}
 	}
 
@@ -181,6 +186,27 @@ public class Player implements Comparable<Player>{
 	
 	public boolean isCarChosen() {
 		return carChosen;
+	}
+	
+	public void rumbleController(boolean rumbleController) {
+		
+		try {
+			if(rumbleController){
+				GameSession.rumbleControllerOn(id);
+			}else{
+				GameSession.rumbleControllerOff(id);
+			}
+		} catch (IOException | EncodeException e) {
+			e.printStackTrace();
+		} 
+	}
+	
+	public void removeLaunchButton(){
+		try {
+			GameSession.removeLaunchButton(id);
+		} catch (IOException | EncodeException e) {
+			e.printStackTrace();
+		} 
 	}
 
 	public void setCarChosen(boolean carChosen) {

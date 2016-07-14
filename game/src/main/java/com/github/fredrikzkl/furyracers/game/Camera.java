@@ -19,7 +19,7 @@ public class Camera {
 	edgeX, edgeY;
 	
 	private Vector2f 
-	deltaDistances,  closestEdge, size;
+	deltaDistances,  closestEdge, visibleMapArea;
 	
 	public Camera(float startX, float startY, Level level){
 		
@@ -34,7 +34,7 @@ public class Camera {
 		mapHeightPixels = level.getMapHeightPixels();
 		mapWidthPixels = level.getMapWidthPixels();
 		
-		size = new Vector2f();
+		visibleMapArea = new Vector2f();
 		deltaDistances = new Vector2f();
 		closestEdge = new Vector2f();
 		
@@ -43,24 +43,24 @@ public class Camera {
 	}
 	
 	public void update(float posX, float posY) {
-		size.x = screenWidth / zoom;
-		size.y = screenHeight/ zoom;
+		visibleMapArea.x = screenWidth/zoom;
+		visibleMapArea.y = screenHeight/zoom;
 		
 		x = -posX;
 		y = -posY;
 		
-		if(posX<0)
+		if(posX < 0)
 			x = 0;
 		
-		if(posY <0)
+		if(posY < 0)
 			y = 0;
 		
-		if(size.x + posX > mapWidthPixels){
-			x = -(mapWidthPixels - size.x);
+		if(visibleMapArea.x + posX > mapWidthPixels){
+			x = visibleMapArea.x - mapWidthPixels;
 		}
 		
-		if(size.y + posY > mapHeightPixels){
-			y = -(mapHeightPixels - size.y);
+		if(visibleMapArea.y + posY > mapHeightPixels){
+			y = visibleMapArea.y - mapHeightPixels;
 		}
 	}
 	
@@ -68,19 +68,19 @@ public class Camera {
 		
 		float deltaX = (float) (deltaDistances.x/(screenWidth/1.98)); //Høyere deleverdi gir mindre margin
 		float deltaY = (float) (deltaDistances.y/(screenHeight/1.92)); 
-		float temp = zoom;
+		
 		boolean zoomLim = true;
 		
 		
-		if(deltaY>deltaX)
-			biggest=deltaY;
+		if(deltaY > deltaX)
+			biggest = deltaY;
 		else
-			biggest=deltaX;
+			biggest = deltaX;
 		
-		temp = initialZoom /biggest;
+		float temp = initialZoom/biggest;
 		
-		if(getSize().x - getX() >= mapWidthPixels && zoom>temp && getX()>=0 || 
-		   getSize().y - getY() >= mapHeightPixels && zoom>temp && getY()>=0)
+		if(getVisibleMapArea().x - getX() >= mapWidthPixels && zoom > temp && getX() >= 0 || 
+		   getVisibleMapArea().y - getY() >= mapHeightPixels && zoom > temp && getY() >= 0)
 			zoomLim = false;
 		
 		if(zoomLim){
@@ -105,8 +105,8 @@ public class Camera {
 		g.scale(zoom, zoom);
 	}
 
-	public Vector2f getSize() {
-		return size;
+	public Vector2f getVisibleMapArea() {
+		return visibleMapArea;
 	}
 
 	public void setZoom(float zoom) {

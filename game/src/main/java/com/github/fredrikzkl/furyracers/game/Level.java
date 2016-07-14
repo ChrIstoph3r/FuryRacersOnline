@@ -1,7 +1,9 @@
 package com.github.fredrikzkl.furyracers.game;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.geom.Vector2f;
 
@@ -12,6 +14,8 @@ public class Level {
 
 	public static int tileHeight, tileWidth;
 	int mapWidthInTiles, mapHeightInTiles;
+	
+	ArrayList<Vector2f> roadTileIDs;
 
 	float mapWidthPixels, mapHeightPixels;
 
@@ -30,6 +34,8 @@ public class Level {
 		mapHeightInTiles = course.data.getHeight();
 		mapHeightPixels = course.data.getTileHeight() * course.data.getHeight();
 		mapWidthPixels = course.data.getTileWidth() * course.data.getWidth();
+		
+		roadTileIDs = new ArrayList<Vector2f>();
 	
 		musicControl();
 		determineStartPosition();
@@ -42,12 +48,16 @@ public class Level {
 	}
 
 	private void determineStartPosition() {
+		
 		for (int x = 0; x < mapWidthInTiles; x++) {
 			for (int y = 0; y < mapHeightInTiles; y++) {
 				int tileIDroad = course.data.getTileId(x, y, roadLayer);
+				if(tileIDroad != 0)
+					roadTileIDs.add(new Vector2f(x, y));
+				
 				if (course.data.getTileProperty(tileIDroad, "startPos", "-1")
 						.equals("start")) {
-					startCoordinates = new Vector2f(x * tileWidth, y * tileHeight);
+					startCoordinates = new Vector2f(x*tileWidth, y*tileHeight);
 					break;
 				}
 				
@@ -59,20 +69,37 @@ public class Level {
 
 		}
 	}
+	
+	public ArrayList<Vector2f> getRoadTileIDs(){
+		return roadTileIDs;
+	}
 
-	public void drawCars(Graphics g, List<Car> cars) {
+	void drawSubMap(Graphics g) {
 		g.drawImage(course.subLayer, 0, 0);
+	}
+	
+	public void drawCars(Graphics g, List<Car> cars){
 		
 		for (Car car : cars) {
 			car.render(g);
 		}
+	}
+	
+	public void drawMissile(Graphics g, Item missile){
+		missile.render(g);
+	}
+	
+	public void drawTopMap(Graphics g){
 		g.drawImage(course.topLayer, 0, 0);
 	}
 
 	public boolean offRoad(float xPos, float yPos) {
 
-		int tileX = (int) (xPos / tileWidth), tileY = (int) (yPos / tileHeight),
-			tileIDroad = course.data.getTileId(tileX, tileY, roadLayer);
+		int 
+		tileX = (int) (xPos / tileWidth), 
+		tileY = (int) (yPos / tileHeight),
+		
+		tileIDroad = course.data.getTileId(tileX, tileY, roadLayer);
 
 		if (tileIDroad != 0)
 			return false;
@@ -81,8 +108,9 @@ public class Level {
 	}
 
 	public String getTileType(int xTile, int yTile, int passedCheckpoints) {
+	
 		int tileIDroad = course.data.getTileId(xTile, yTile, roadLayer);
-
+		
 		if ( isCheckpoint(tileIDroad, "1") && passedCheckpoints == 0) {
 			return "checkpoint1";
 		} else if ( isCheckpoint(tileIDroad, "2") && passedCheckpoints == 1) {
@@ -106,6 +134,14 @@ public class Level {
 
 	public float getMapWidthPixels() {
 		return mapWidthPixels;
+	}
+	
+	public Vector2f tilePosToPos(Vector2f tilePos){
+		
+		tilePos.x *= tileWidth;
+		tilePos.y *= tileHeight;
+		
+		return tilePos; 
 	}
 
 	public float getMapHeightPixels() {
@@ -135,5 +171,4 @@ public class Level {
 	public CourseHandler getCourse(){
 		return course;
 	}
-
 }
