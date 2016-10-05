@@ -5,17 +5,12 @@ import java.io.IOException;
 import javax.websocket.EncodeException;
 
 import org.newdawn.slick.Graphics;
-import org.newdawn.slick.SlickException;
 import org.newdawn.slick.geom.Polygon;
-import org.newdawn.slick.geom.Rectangle;
-import org.newdawn.slick.geom.Shape;
-import org.newdawn.slick.geom.Transform;
 import org.newdawn.slick.geom.Vector2f;
 
 import com.github.fredrikzkl.furyracers.Box;
 import com.github.fredrikzkl.furyracers.assets.Animations;
 import com.github.fredrikzkl.furyracers.assets.Sounds;
-import com.github.fredrikzkl.furyracers.assets.Sprites;
 import com.github.fredrikzkl.furyracers.car.Car;
 import com.github.fredrikzkl.furyracers.car.CollisionBox;
 import com.github.fredrikzkl.furyracers.car.Properties;
@@ -28,11 +23,11 @@ public class Item extends Movement implements Box{
 	float[] itemBoxPoints;
 	boolean drawExpl, explActive;
 	
+	Car eqpdToCar, targetedCar;
+	CollisionBox colBox;
 	String itemType;
 	Vector2f dimensions;
 	Polygon itemBox;
-	Car eqpdToCar, targetedCar;
-	CollisionBox colBox;
 
 	public Item(Properties stats, Vector2f startCoords) {
 		 
@@ -67,8 +62,6 @@ public class Item extends Movement implements Box{
 			
 			centerOfRotationYOffset = dimensions.y;
 			
-			//turnTwrdsTargetAngle(thtaAnglTwrdsTargtCar);
-			
 			updateSpeed(deltaTime, preventMovement);
 			rePosition(deltaTime);
 		}
@@ -88,7 +81,6 @@ public class Item extends Movement implements Box{
 			stats.image.setCenterOfRotation(0, dimensions.y);
 		
 		stats.image.setRotation(getMovementDegrees());
-		
 		
 		if(drawExpl)
 			drawExplosion();
@@ -128,7 +120,7 @@ public class Item extends Movement implements Box{
 		Animations.explosion.draw(xPos, yPos, explWidth, explHeight);
 	}
 	
-	private void turnTwrdsTargetAngle(float targetAngle){
+	/*private void turnTwrdsTargetAngle(float targetAngle){
 		
 		System.out.println("movement " + movementDegrees + " target " + targetAngle);
 		float diff = targetAngle - movementDegrees;
@@ -143,7 +135,7 @@ public class Item extends Movement implements Box{
 			turnLeft = false;
 			turnRight = false;
 		}
-	}
+	}*/
 	
 	private float thtaAnglForVctr(Vector2f vector){
 		
@@ -176,6 +168,7 @@ public class Item extends Movement implements Box{
 	
 	public void launchMissile(Car targetedCar) throws IOException, EncodeException{
 		
+		if(eqpdToCar == null)return; 
 		System.out.println("Missile Launch");
 		GameSession.removeLaunchButton(targetedCar.getId());
 		isLaunched = true;

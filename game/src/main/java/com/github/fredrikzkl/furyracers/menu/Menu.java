@@ -52,7 +52,7 @@ public class Menu extends BasicGameState {
 	private GameCore core;
 	private CourseHandler course;
 	public List<String> console;
-	public List<Player> players;
+	public ArrayList<Player> players;
 	private ParallaxBackground background;
 
 	public Menu(GameCore game) {
@@ -65,6 +65,7 @@ public class Menu extends BasicGameState {
 		Sprites.loadQRimage();
 		Application.setInMenu(true);
 		GameSession.setGameState(getID());
+		System.out.println("Lame");
 	}
 
 	public void update(GameContainer container, StateBasedGame game, int delta) throws SlickException {
@@ -182,7 +183,7 @@ public class Menu extends BasicGameState {
 		int stringLength = Fonts.header.getWidth(headerString);
 		
 		float xPos = screenWidth/2 - stringLength/2;
-		Fonts.header.drawString(xPos, screenHeight/15, "Fury Racers", Fonts.headerColor);
+		Fonts.header.drawString(xPos, screenHeight/15, headerString, Fonts.headerColor);
 	}
 
 	private void drawPlayerIcons(GameContainer container, Graphics g) {
@@ -207,10 +208,51 @@ public class Menu extends BasicGameState {
 			int carSelectNum = players.get(i).getCarSel();
 			int colorSelectNum = players.get(i).getColorSel();
 			
-			g.drawImage( getCarImage(carSelectNum, colorSelectNum), xPos, yPos);
+			Image carImg = getCarImage(carSelectNum, colorSelectNum);
+			
+			g.drawImage( carImg, xPos, yPos);
+			drawPlayerStatus(xPos, yPos, i, carImg.getHeight());
 		}else{
 			g.drawImage(getEmptyBlackImage(), xPos, yPos);
 		}
+	}
+	
+	private void drawPlayerStatus(float xPosCarImg, float yPosCarImg, int i, float carImgHeight){
+		
+		String selectionStatusTxt = getPlayerStatus(i);
+		
+		float boxWidth = Fonts.consoleText.getWidth(selectionStatusTxt);
+		float boxHeight =Fonts.consoleText.getHeight();
+		
+		float yPosStatus = yPosCarImg + carImgHeight + boxHeight/2;
+		
+		float boxTransparacy = 0.5f;
+		drawFadedBackground(xPosCarImg, yPosStatus, boxWidth, boxHeight, boxTransparacy);
+		
+		Fonts.consoleText.drawString(xPosCarImg, yPosStatus, selectionStatusTxt, Color.white);
+	}
+	
+	private void drawFadedBackground(float xPos, float yPos, float width, float height, float boxTransparacy){
+		
+		float cornerRadius = 1f;
+		
+		RoundedRectangle infoBox = new RoundedRectangle(xPos, yPos, width, height, cornerRadius);
+		Graphics g = new Graphics();
+		g.setColor(new Color(0f, 0f, 0f, boxTransparacy));
+		g.fill(infoBox);
+	}
+	
+	private String getPlayerStatus(int i){
+		
+		Player player = players.get(i);
+		
+		if(player.isReady())
+			return "Ready!";
+		
+		if(!player.isCarChosen())
+			return "Select car";
+		
+		return "Select color";
 	}
 	
 	private void drawBoarder(float startPlayerIcons, float yPos, Graphics g){
@@ -308,66 +350,78 @@ public class Menu extends BasicGameState {
 			case "3":
 				leftButtonDown(playerNr);
 				break;
+			case "4":
+				backButtonDown(playerNr);
+				break;
+		}
+	}
+	
+	private void backButtonDown(int playerNr){
+		
+		Player player = players.get(playerNr - 1);
+		
+		if(player.isCarChosen()){
+			
+			Sounds.deSelect.play();
+			
+			if(player.isReady())
+				player.setReady(false);
+			else
+				player.setCarChosen(false);
+			
 		}
 	}
 	
 	private void selectButtonDown(int playerNr) throws IOException, EncodeException{
 		
-		for (int i = 0; i < players.size(); i++) {
-			if (playerNr == i + 1) {
-				Player player = players.get(i);
-				player.sendCarColorToController(); //Sometimes initial messages containing car model and color, . 
-				player.sendCarModelToController(); //are never received by controller.
-													//This provides added certainty.
-				if (player.isCarChosen()) {			
-					if (player.isReady()) {
-						player.setReady(false);
-						Sounds.deSelect.play();
-					} else {
-						detCarComboForSpriteSheet(player);
-						player.setReady(true);
-						Sounds.playerReady.play();
-					}
-				} else {
-					player.setCarChosen(true);
-					Sounds.select_car.play();
-				}
+		Player player = players.get(playerNr - 1);
+		
+		player.sendCarColorToController(); //Sometimes initial messages containing car model and color, . 
+		player.sendCarModelToController(); //are never received by controller.
+											//This provides added certainty.
+		if (player.isCarChosen()) {			
+			if (player.isReady()) {
+				player.setReady(false);
+				Sounds.deSelect.play();
+			} else {
+				detCarComboForSpriteSheet(player);
+				player.setReady(true);
+				Sounds.playerReady.play();
 			}
+		} else {
+			player.setCarChosen(true);
+			Sounds.select_car.play();
 		}
+
 	}
 	
 	private void rightButtonDown(int playerNr) throws IOException, EncodeException{
+
+		Player player = players.get(playerNr - 1);
 		
-		for (int i = 0; i < players.size(); i++) {
-			if (playerNr == i + 1) {
-				Player player = players.get(i);
-				if (!player.isReady()) {
-					if (player.isCarChosen()) {
-						player.selNextColor();;
-						Sounds.spray.play();
-					} else {
-						player.selNextCar();
-						Sounds.car_select.play();
-					}
-				}
+		if (!player.isReady()) {
+			if (player.isCarChosen()) {
+				player.selNextColor();
+				Sounds.spray.play();
+			} else {
+				player.selNextCar();
+				Sounds.car_select.play();
 			}
 		}
+
 	}
 	
 	private void leftButtonDown(int playerNr) throws IOException, EncodeException{
 		
-		for (int i = 0; i < players.size(); i++) {
-			if (playerNr == i + 1) {
-				Player player = players.get(i);
-				if (!player.isReady()) {
-					if (player.isCarChosen()) {
-						player.selPrevColor();
-						Sounds.spray.play();
-					} else {
-						player.selPrevCar();
-						Sounds.car_select.play();
-					}
-				}
+		Player player = players.get(playerNr - 1);
+		
+		if (!player.isReady()) {
+			if (player.isCarChosen()) {
+				player.selPrevColor();
+				Sounds.spray.play();
+			} else {
+				player.selPrevCar();
+				Sounds.car_select.play();
 			}
 		}
 	}
@@ -401,7 +455,6 @@ public class Menu extends BasicGameState {
 		drawCountdown();
 		
 		drawBlinkingInfo();
-		
 	}
 	
 	private void drawCountdown(){

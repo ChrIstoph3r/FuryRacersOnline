@@ -1,6 +1,10 @@
 package com.github.fredrikzkl.furyracers;
 
-import com.github.fredrikzkl.furyracers.assets.*;
+import com.github.fredrikzkl.furyracers.assets.Animations;
+import com.github.fredrikzkl.furyracers.assets.Fonts;
+import com.github.fredrikzkl.furyracers.assets.Sounds;
+import com.github.fredrikzkl.furyracers.assets.Sprites;
+import com.github.fredrikzkl.furyracers.database.DBThread;
 import com.github.fredrikzkl.furyracers.game.GameCore;
 import com.github.fredrikzkl.furyracers.menu.Menu;
 import com.github.fredrikzkl.furyracers.network.GameSession;
@@ -15,14 +19,16 @@ import org.newdawn.slick.state.StateBasedGame;
 import java.awt.*;
 import java.io.IOException;
 
+import javax.swing.JOptionPane;
 import javax.websocket.EncodeException;
 
 public class Application extends StateBasedGame {
 
-	private final static String version = "0.2" + "a";
+	private final static boolean makeFullscreen = true;
+	private final static String version = "0.9" + "b";
 	private final static String gameName = "FuryRacers";
 	private final static int menuID = 0;
-	public static final int FPS = 120;
+	public static final int FPS = 60;
 
 	private static GameCore game;
 	private static Menu menu;
@@ -38,8 +44,13 @@ public class Application extends StateBasedGame {
 	
 	public Application(String gameName) {
 		super(gameName);
-		this.addState(menu);
-		this.addState(game);
+		addState(menu);
+		addState(game);
+	}
+	
+	public static void initOnlineHighScores(){
+		
+		new Thread(new DBThread() ).start();
 	}
 
 	public static void closeConnection() {
@@ -47,8 +58,7 @@ public class Application extends StateBasedGame {
 		try {
 			gameSession.closeConnection();
 		} catch (IOException | EncodeException e) {
-			System.out.println("Failed disconnect: ");
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null,"Failed disconnect: " + e.getMessage() );
 		}
 	}
 
@@ -76,15 +86,17 @@ public class Application extends StateBasedGame {
 		menu.setVersion(version);
 	}
 
-	private static void startGame() {
+	public static void startGame() {
 		try {
 			screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 			Display.setResizable(true);
 			AppGameContainer app = new AppGameContainer(new ScalableGame(
 					new Application(gameName), (int) screenSize.getWidth(),
 					(int) screenSize.getHeight()));
-			app.setDisplayMode((int) screenSize.getWidth(),
-					(int) screenSize.getHeight(), false);
+			
+			app.setDisplayMode(
+					(int) screenSize.getWidth(),
+					(int) screenSize.getHeight(), makeFullscreen);
 			app.setTargetFrameRate(FPS);
 			app.setAlwaysRender(true);
 			app.start();
@@ -108,11 +120,11 @@ public class Application extends StateBasedGame {
 	}
 
 	public static void fatalError(String error) {
-		System.out.println(error);
+		JOptionPane.showMessageDialog(null, error+"\n Exiting after 'OK'.");
 		exit();
 	}
 
-	private static void exit() {
+	public static void exit() {
 		System.out.println("Unable to recover; exiting...");
 		System.exit(1);
 	}

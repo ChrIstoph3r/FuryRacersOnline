@@ -11,6 +11,7 @@ import javax.websocket.Session;
 import org.glassfish.tyrus.client.ClientManager;
 import org.newdawn.slick.SlickException;
 
+import com.github.fredrikzkl.furyracers.Application;
 import com.github.fredrikzkl.furyracers.game.GameCore;
 import com.github.fredrikzkl.furyracers.game.Player;
 import com.github.fredrikzkl.furyracers.menu.Menu;
@@ -49,6 +50,10 @@ public class GameSession {
 
 		switch (action) {
 		
+			case "ios ping": {
+				String playerId = jsonObj.getString("from");
+				sendToClient(playerId, "ios ping", "");
+			}
 			
 			case "get username": {
 				
@@ -127,6 +132,9 @@ public class GameSession {
 	private void removePlayer(String id){
 		
 		System.out.println("PLAYER " + id + " REMOVED!");
+		if(players.size() < 2){ 
+			Application.exit();
+		}
 
 		for (Player player : players) {
 			if (player.getId().equals(id)) {
@@ -143,7 +151,7 @@ public class GameSession {
 				.add("action", action)
 				.add("data", data).build());
 		
-		System.out.println("Sending action: " + action + " and data: " + data);
+		//System.out.println("Sending action: " + action + " and data: " + data);
 	}
 	
 	private static void sendToClient(String recieverId, String action, String data) throws IOException, EncodeException{
@@ -156,7 +164,7 @@ public class GameSession {
 		 
 		backend.getBasicRemote().sendObject(message);
 		
-		System.out.println("Sending action: " + action + " and data: " + data + " to: " + recieverId);
+		//System.out.println("{action: " + action + ", data: " + data + ", to: " + recieverId + "}");
 	}
 	
 	private static void setUsername(String id, String username){

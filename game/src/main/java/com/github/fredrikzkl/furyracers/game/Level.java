@@ -3,7 +3,6 @@ package com.github.fredrikzkl.furyracers.game;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.geom.Vector2f;
 
@@ -41,6 +40,9 @@ public class Level {
 		determineStartPosition();
 	}
 
+	public String getMapName(){
+		return course.mapName;
+	}
 	private void musicControl() {
 		course.soundTrack.loop();
 		course.soundTrack.setVolume(0.4f);

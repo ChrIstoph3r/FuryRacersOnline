@@ -163,6 +163,8 @@ public class CollisionHandler {
 	private ArrayList<String> whichDirectionToStop(float xCarPos, float yCarPos, float xVector, float yVector) {
 
 		ArrayList<String> stopCarMovement = new ArrayList<String>();
+		
+		if(xCarPos < 0 || yCarPos < 0)return stopCarMovement;
 
 		int 
 		tileX = (int) (xCarPos / Level.tileWidth), 

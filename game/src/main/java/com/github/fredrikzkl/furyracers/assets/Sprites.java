@@ -1,9 +1,7 @@
 package com.github.fredrikzkl.furyracers.assets;
 
-import org.newdawn.slick.Animation;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
-import org.newdawn.slick.SpriteSheet;
 
 public class Sprites {
 	

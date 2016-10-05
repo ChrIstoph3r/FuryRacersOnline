@@ -6,18 +6,18 @@ import com.github.fredrikzkl.furyracers.game.Movement;
 
 
 public class Controlls extends Movement{
-
-	private int
-	stopLockLeft = 0, stopLockRight = 0;
 	
-	boolean 
-	ignoreNextRight, ignoreNextLeft;
+	private int
+	preventLeftLock, preventRightLock;
+	
+	private boolean 
+	ignoreNextRight, ignoreNextLeft;	
 
 	public Controlls(Properties stats, Vector2f startPos) {
 
-		super(stats, startPos);
-		stopLockLeft = 0;
-		stopLockRight = 0; 
+		super(stats, startPos); 
+		preventLeftLock = 0;
+		preventRightLock = 0;
 	}
 	
 	public String getTurningDirection(){
@@ -33,60 +33,57 @@ public class Controlls extends Movement{
 
 	public void throttleKeyDown() {
 		accelerate = true;
-		reverseKeyUp();
 	}
+	
 
 	public void rightKeyDown() {
-		if(!ignoreNextRight){
-			turnRight = true;
+		
+		if(ignoreNextRight){
+			ignoreNextRight = false;
+			return;
 		}
-		ignoreNextRight = false;
+		
+		ignoreNextLeft = false;
+		turnRight = true;
+		turnLeft = false;
 	}
 
 	public void rightKeyUp() {
 		
-		if(!turnRight){
-			stopLockRight++;
-			if(stopLockRight < 1){
-				
-				ignoreNextRight = true;
-			}else{
-				stopLockRight = 0;
-			}
-		}else{
-			turnRight = false;
-			ignoreNextRight = false;
+		if(!turnRight && preventRightLock < 2){
+			ignoreNextRight = true;
+			preventRightLock++;
+			return;
 		}
-	}
-
-	public void reverseKeyDown() {
-		reverse = true;
-		throttleKeyUp();
+		
+		preventRightLock = 0;
+		turnRight = false;
 	}
 	
 	public void leftKeyDown() {
-		if(!ignoreNextLeft){
-			turnLeft = true;
+		
+		if(ignoreNextLeft){
+			ignoreNextLeft = false;
+			return;
 		}
-		ignoreNextLeft = false;
+		
+		ignoreNextRight = false;
+		turnLeft = true;
+		turnRight = false;
 	}
 
 	public void leftKeyUp() {
 		
-		
-		if(!turnLeft){
-			stopLockLeft++;
-			if(stopLockLeft < 1){
-				ignoreNextLeft = true;
-			}else{
-				stopLockLeft = 0;
-			}
-		}else{
-			turnLeft = false;
-			ignoreNextLeft = false;
+		if(!turnLeft && preventLeftLock < 2){
+			ignoreNextLeft = true;
+			preventLeftLock++;
+			return;
 		}
+		
+		preventLeftLock = 0;
+		turnLeft = false;
 	}
-
+	
 	public void reverseKeyUp() {
 		reverse = false;
 	}

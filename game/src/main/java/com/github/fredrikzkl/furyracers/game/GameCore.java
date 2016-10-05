@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.JOptionPane;
 import javax.websocket.EncodeException;
 
 import org.newdawn.slick.Color;
@@ -12,16 +13,15 @@ import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
-import org.newdawn.slick.geom.Polygon;
 import org.newdawn.slick.geom.RoundedRectangle;
 import org.newdawn.slick.geom.Vector2f;
 import org.newdawn.slick.state.BasicGameState;
 import org.newdawn.slick.state.StateBasedGame;
 
 import com.github.fredrikzkl.furyracers.Application;
+import com.github.fredrikzkl.furyracers.Result;
 import com.github.fredrikzkl.furyracers.assets.Fonts;
 import com.github.fredrikzkl.furyracers.assets.Sounds;
-import com.github.fredrikzkl.furyracers.assets.Sprites;
 import com.github.fredrikzkl.furyracers.car.Car;
 import com.github.fredrikzkl.furyracers.car.Properties;
 import com.github.fredrikzkl.furyracers.network.GameSession;
@@ -29,7 +29,7 @@ import com.github.fredrikzkl.furyracers.network.GameSession;
 public class GameCore extends BasicGameState {
 
 	public final static int 
-	maxLaps = 3, menuID = 0;
+	maxLaps = 1, menuID = 0;
 	
 	private int 
 	screenWidth, screenHeight;
@@ -45,9 +45,8 @@ public class GameCore extends BasicGameState {
 
 	private boolean 
 	raceStarted, countdownStarted, startGoSignal, goSignal, 
-	raceFinished, threePlayed, twoPlayed, onePlayed, goPlayed;
-
-	private static boolean exploding;
+	raceFinished, threePlayed, twoPlayed, onePlayed, goPlayed,
+	isHiScrUpdtd;
 
 	private static boolean 
 	makeNewMissile;
@@ -58,25 +57,24 @@ public class GameCore extends BasicGameState {
 
 	private String IP;
 
-	private static String itmTargetedFor;
-	
 	private ScoreBoard scoreboard;
-	public static List<Car> cars;
-	public List<Player> players;
+	public static ArrayList<Car> cars;
+	public static List<Player> players;
 	private Camera camera;
-	private Level level;
+	private static Level level;
 	static Item missile;
+	static ArrayList<Result> highScores;
 
 
 	public void init(GameContainer container, StateBasedGame sbg) throws SlickException {
 		initVariables();
 	}
 
-	public void mapInput(CourseHandler course, List<Player> players) throws SlickException {
+	public void mapInput(CourseHandler course, ArrayList<Player> players) throws SlickException {
 
 		GameSession.setGameState(getID());
 		Application.setInMenu(false);
-		this.players = players;
+		GameCore.players = players;
 		level = new Level(course);
 		camera = new Camera(0, 0, level);
 		camera.setZoom(0.3f);
@@ -94,6 +92,16 @@ public class GameCore extends BasicGameState {
 		checkDistances();
 		camera.zoomLogic();
 		camera.updateCamCoordinates();
+		highScoreCheck();
+	}
+	
+	private void highScoreCheck(){
+		
+		if(raceFinished && !isHiScrUpdtd){
+			
+			isHiScrUpdtd = true;
+			Application.initOnlineHighScores();
+		}
 	}
 
 	public void render(GameContainer container, StateBasedGame sbg, Graphics g) throws SlickException {
@@ -107,11 +115,22 @@ public class GameCore extends BasicGameState {
 		drawPlayerInfo(g);
 		countdown(g);
 		drawIp();
+		updateScoreBoard(container, sbg);
+		
+	}
+	
+	private void updateScoreBoard(GameContainer container, StateBasedGame sbg) throws SlickException{
+		
 		if (raceFinished)
-			scoreboard.drawScoreBoard();
+			scoreboard.drawScoreBoard(highScores);
 		if (scoreboard.isReturnToMenuTimerDone()) {
 			returnToMenu(container, sbg);
 		}
+	}
+	
+	public static Level getLevel(){
+		
+		return level;
 	}
 	
 	public void updateItem(int deltaTime){
@@ -136,11 +155,13 @@ public class GameCore extends BasicGameState {
 	
 	private static Car findRndmCarExcept(String carId){
 		
+		int lastCarIndx = cars.size()-1;
+		
 		while(true){
 			
-			if(cars.size()<=1) return null;
+			if(cars.size()<2) return null;
 			
-			int rndmCarIndx = randomInt(0, cars.size()-1);
+			int rndmCarIndx = randomInt(0, lastCarIndx);
 			
 			Car carToTarget = cars.get(rndmCarIndx); 
 			
@@ -177,6 +198,11 @@ public class GameCore extends BasicGameState {
 		for (Player player : players) {
 			createCar(player.getPlayerNr(), player.getId(), player.getCarComboNr());
 		}
+	}
+	
+	public static void setHighScores(ArrayList<Result> highScores){
+		
+		GameCore.highScores = highScores;
 	}
 	
 	private void drawIp(){
@@ -313,7 +339,7 @@ public class GameCore extends BasicGameState {
 				missile.checkIntersection(car);
 				
 			} catch (IOException | EncodeException e) {
-				e.printStackTrace();
+				JOptionPane.showMessageDialog(null, e.getMessage());
 			}
 			
 			if (car.isRaceFinished())
@@ -336,7 +362,7 @@ public class GameCore extends BasicGameState {
 		makeNewMissile = true;
 	}
 
-	public void returnToMenu(GameContainer container, StateBasedGame game) throws SlickException {
+	public static void returnToMenu(GameContainer container, StateBasedGame game) throws SlickException {
 		
 		for(Car car : cars){
 			car.controlls.resetTopSpeed();
@@ -408,15 +434,13 @@ public class GameCore extends BasicGameState {
 	}
 
 	public void checkForKeyboardInput(GameContainer container, StateBasedGame game) throws SlickException {
+		
 		Input input = container.getInput();
 
 		if (input.isKeyPressed(Input.KEY_R)) {
 			returnToMenu(container, game);
 		}
-		
-		if (input.isKeyPressed(Input.KEY_H)) {
-			scoreboard.drawScoreBoard();
-		}
+
 	}
 
 	public void createCar(int nr, String id, int playerChoice) throws SlickException {
@@ -447,14 +471,15 @@ public class GameCore extends BasicGameState {
 		threePlayed = twoPlayed = onePlayed = 
 		goPlayed = finalRoundSaid = 
 		crowdFinishedPlayed = raceFinished = 
-		raceStarted = countdownStarted = itmEqpd = false;
+		raceStarted = countdownStarted = itmEqpd
+		= isHiScrUpdtd = false;
 		
 		startGoSignal = makeNewMissile = true;
 		
-		itmTargetedFor = "";
-		
 		screenWidth = Application.screenSize.width;
 		screenHeight = Application.screenSize.height;
+		
+		highScores = new ArrayList<Result>();
 		
 		zoom = 1;
 		biggest = 0;

@@ -146,16 +146,18 @@ public class Player implements Comparable<Player>{
 		
 		switch (data) {
 		case "0":
-			getCar().controlls.reverseKeyDown();
+			//getCar().controlls.reverseKeyDown();
 			break;
 		case "1":
 			getCar().controlls.throttleKeyDown();
 			break;
 		case "2":
 			getCar().controlls.rightKeyDown();
+			System.out.println("rightKeyDown");
 			break;
 		case "3":
 			getCar().controlls.leftKeyDown();
+			System.out.println("leftKeyDown");
 			break;
 		case "4":
 			GameCore.activateMissile(id);
@@ -167,16 +169,18 @@ public class Player implements Comparable<Player>{
 	public void buttonUp(String data) {
 		switch (data) {
 		case "0":
-			getCar().controlls.reverseKeyUp();
+			//getCar().controlls.reverseKeyUp();
 			break;
 		case "1":
 			getCar().controlls.throttleKeyUp();
 			break;
 		case "2":
 			getCar().controlls.rightKeyUp();
+			System.out.println("rightKeyUp");
 			break;
 		case "3":
 			getCar().controlls.leftKeyUp();
+			System.out.println("leftKeyUp");
 		}
 	}
 	

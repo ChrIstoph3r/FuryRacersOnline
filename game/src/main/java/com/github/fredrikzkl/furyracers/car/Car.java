@@ -19,6 +19,7 @@ import com.github.fredrikzkl.furyracers.Box;
 import com.github.fredrikzkl.furyracers.assets.Sounds;
 import com.github.fredrikzkl.furyracers.game.GameCore;
 import com.github.fredrikzkl.furyracers.game.Level;
+import com.github.fredrikzkl.furyracers.game.Player;
 import com.github.fredrikzkl.furyracers.network.GameSession;
 
 public class Car implements Comparable<Car>, Box {
@@ -49,8 +50,8 @@ public class Car implements Comparable<Car>, Box {
 	float[] collisionBoxPoints;
 
 	private String 
-	tileType, timeElapsed, 
-	id, username;
+	tileType, formattedTimeElapsed, 
+	id;
 	
 	private Vector2f 
 	startPos;
@@ -118,7 +119,6 @@ public class Car implements Comparable<Car>, Box {
 		currentTime = 0;
 		preventMovement = true;
 		offRoad = false;
-		username = "";
 		isRaceFinished = false;
 		startClock = false;
 		stoppingDirections = new ArrayList<String>();
@@ -233,7 +233,7 @@ public class Car implements Comparable<Car>, Box {
 		laps++;
 		passedChekpoints = 0;
 		
-		if(!Sounds.lap.playing() && laps != 3)
+		if(!Sounds.lap.playing() && laps != maxLaps)
 			Sounds.lap.play();
 	}
 	
@@ -347,20 +347,29 @@ public class Car implements Comparable<Car>, Box {
 		}
 
 		if (startTime != 0 && !isRaceFinished) {
+			
 			currentTime = System.nanoTime();
 			nanoSecondsElapsed = currentTime - startTime;
+			
 			minutesElapsed = TimeUnit.NANOSECONDS.toMinutes(nanoSecondsElapsed);
+			formattedTimeElapsed = minutesElapsed + ":";
+			
 			secondsElapsed = TimeUnit.NANOSECONDS.toSeconds(nanoSecondsElapsed) - 60*minutesElapsed;
+			if(secondsElapsed < 10) formattedTimeElapsed += "0";
+			formattedTimeElapsed += secondsElapsed + ":" ;
+			
 			totalTenthsOfSeconds = TimeUnit.NANOSECONDS.toMillis(nanoSecondsElapsed)/100;
+			
 			tenthsOfASecondElapsed = totalTenthsOfSeconds
 					- TimeUnit.NANOSECONDS.toSeconds(nanoSecondsElapsed)*10;
+			
+			formattedTimeElapsed += tenthsOfASecondElapsed;  
 
-			timeElapsed = minutesElapsed + ":" + secondsElapsed + ":" + tenthsOfASecondElapsed;
 		}
 	}
 
-	public String getTimeElapsed() {
-		return timeElapsed;
+	public String getformattedTimeElapsed() {
+		return formattedTimeElapsed;
 	}
 
 	public int getPlayerNr() {
@@ -398,8 +407,8 @@ public class Car implements Comparable<Car>, Box {
 	}
 
 	@Override
-	public int compareTo(Car o) {
-		return -(Integer.compare(getTime(), o.getTime()));
+	public int compareTo(Car car) {
+		return Integer.compare( car.getTime(), getTime());
 	}
 	
 	
@@ -429,12 +438,18 @@ public class Car implements Comparable<Car>, Box {
 		explSlowDown = true;
 	}
 	
-	public void setUsername(String username){
-		this.username = username;
+	public String getCarModel(){
+		return stats.name;
 	}
 	
 	public String getUsername(){
-		return username;
+		
+		for(Player player : GameCore.players){
+			if(player.getId() == getId())
+				return player.getUsername();
+		}
+		
+		return "";
 	}
 	
 	public Vector2f getMovementVector(){

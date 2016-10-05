@@ -3,6 +3,8 @@ package com.github.fredrikzkl.furyracers.assets;
 import java.awt.Font;
 import java.io.InputStream;
 
+import javax.swing.JOptionPane;
+
 import org.newdawn.slick.Color;
 import org.newdawn.slick.TrueTypeFont;
 import org.newdawn.slick.util.ResourceLoader;
@@ -10,7 +12,7 @@ import org.newdawn.slick.util.ResourceLoader;
 public class Fonts {
 	
 	private static float 
-	headerSize = 28f,textSize = 22f,
+	headerSize = 28f,textSize = 17f,
 	consoleSize = 15f;
 	
 	public static TrueTypeFont 
@@ -48,7 +50,7 @@ public class Fonts {
 			countdown = new TrueTypeFont(awtFont6, true);
 			infoFont = new TrueTypeFont(awtFont7, true);
 		} catch (Exception e) {
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, e.getMessage());
 		}
 	}
 

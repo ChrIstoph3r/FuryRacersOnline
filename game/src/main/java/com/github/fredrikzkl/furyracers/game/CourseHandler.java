@@ -1,10 +1,10 @@
 package com.github.fredrikzkl.furyracers.game;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.util.Scanner;
+
+import javax.swing.JOptionPane;
 
 import org.newdawn.slick.Image;
 import org.newdawn.slick.Music;
@@ -23,7 +23,6 @@ public class CourseHandler {
 	public String mapName;
 	
 	private File info;
-	private BufferedReader br;
 	
 	public CourseHandler(int level){
 		this.level = level;
@@ -48,7 +47,9 @@ public class CourseHandler {
 			info = new File (directory + "info.txt");
 			minimap = new Image(directory + "minimap.png");
 		} catch (SlickException e) {
-			System.out.println("Could not load level " + level + " properly! Jumping to next map..." + e);
+			
+			String error = "Could not load level " + level + " properly! Jumping to next map..." + e;
+			JOptionPane.showMessageDialog(null, error);
 			subLayer = null;
 			topLayer = null;
 			soundTrack = null;
@@ -60,26 +61,27 @@ public class CourseHandler {
 	}
 
 	private String readTxtFile(File file){
-		String name = "FuryRacers Course";
+		
+		String name = "";
 		
 		try {
-			br = new BufferedReader(new FileReader(info));
-			StringBuilder sb = new StringBuilder();
-			String line = br.readLine();
 			
-			while(line != null){
-				sb.append(line);
-				sb.append(System.lineSeparator());
-		        line = br.readLine();
+			Scanner txtFile = new Scanner(file);
+			
+			while(txtFile.hasNext()){
+				name += txtFile.next() + " ";
 			}
-			name = sb.toString();
-			br.close();
+			
+			if(name.length() > 0){
+				name = name.substring(0, name.length()-1);
+			}
+			
+			txtFile.close();
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		} 
+		
 		return name;
 	}
 }
